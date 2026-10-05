@@ -1,0 +1,12 @@
+node_modules/
+web/node_modules/
+web/dist/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+deployments/fork.json
+ref/
+.env
+*.log
+.DS_Store
+.vercel

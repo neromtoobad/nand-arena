@@ -1,0 +1,11 @@
+{
+  "name": "nand-arena",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:sdk": "node sdk/test/sdk.test.mjs"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  }
+}
