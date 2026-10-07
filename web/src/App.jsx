@@ -20,13 +20,13 @@ function useHashRoute() {
   return { parts: path.split("/").filter(Boolean), query: new URLSearchParams(query) };
 }
 
-export function Logo({ size = 26 }) {
+export function Logo({ size = 34 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect x="5" y="5" width="22" height="22" rx="5" fill="#1d1d1b" />
       {[10, 16, 22].map(p => (
-        <g key={p} fill="#1d1d1b"><rect x={p - 1} y="1" width="2" height="4" rx="1" /><rect x={p - 1} y="27" width="2" height="4" rx="1" /><rect x="1" y={p - 1} width="4" height="2" rx="1" /><rect x="27" y={p - 1} width="4" height="2" rx="1" /></g>
+        <g key={p} fill="#ffffff" stroke="#17132b" strokeWidth="1"><rect x={p - 1.5} y="0.5" width="3" height="5" rx="1.2" /><rect x={p - 1.5} y="26.5" width="3" height="5" rx="1.2" /><rect x="0.5" y={p - 1.5} width="5" height="3" rx="1.2" /><rect x="26.5" y={p - 1.5} width="5" height="3" rx="1.2" /></g>
       ))}
+      <rect x="4.5" y="4.5" width="23" height="23" rx="6" fill="#17132b" stroke="#17132b" strokeWidth="1.5" />
       <path d="M10 20 v-8 h5 v4 h4" stroke="#4ff2d4" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M22 12 v8 h-5" stroke="#ff8db3" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -64,23 +64,23 @@ export default function App() {
     <Ctx.Provider value={{ season, error, refresh, wallet, connect, setToast }}>
       <header className="hdr">
         <div className="wrap">
-          <a className="logo" href="#/"><Logo /> NAND Arena</a>
+          <a className="logo" href="#/"><Logo /> <b>NAND Arena</b></a>
           <nav className="nav">
             <a href="#/" className={page === "" || page === "match" ? "on" : ""}>Arena</a>
             <a href="#/lab" className={page === "lab" ? "on" : ""}>Bot Lab</a>
             <a href="#/how" className={page === "how" ? "on" : ""}>How it works</a>
           </nav>
           <div className="spacer" />
-          <span className="pill hide-sm"><span className="dot" /> {IS_FORK ? "X Layer fork (dev)" : "X Layer mainnet"}</span>
+          <span className="net"><i /> {IS_FORK ? "X Layer fork (dev)" : "X Layer mainnet"}</span>
           {wallet
-            ? <a className="btn ghost sm" href={addrUrl(wallet.address)} target="_blank" rel="noreferrer">{short(wallet.address)}</a>
-            : <button className="btn primary sm" onClick={connect}>Connect wallet</button>}
+            ? <a className="btn sm" href={addrUrl(wallet.address)} target="_blank" rel="noreferrer">{short(wallet.address)}</a>
+            : <button className="btn sun sm" onClick={connect}>Connect</button>}
         </div>
       </header>
-      <main className="wrap">{body}</main>
+      <main>{body}</main>
       <footer className="foot">
         <div className="wrap">
-          <span>NAND Arena · bots are TapeOut circuits on X Layer · refereed on-chain</span>
+          <span>NAND Arena · every bot is a TapeOut circuit on X Layer · refereed on-chain · built for the Genesis Transistor Hackathon</span>
           {DEPLOY && (
             <span>
               Arena <a className="addr" href={addrUrl(DEPLOY.arena)} target="_blank" rel="noreferrer">{short(DEPLOY.arena)}</a>

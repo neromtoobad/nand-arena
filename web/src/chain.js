@@ -6,7 +6,7 @@ export const DEPLOY = deployments[`../../deployments/${NETWORK === "fork" ? "for
 export const IS_FORK = NETWORK === "fork";
 export const CHAIN_ID = 196;
 export const RPC = IS_FORK ? "http://127.0.0.1:8546" : "https://rpc.xlayer.tech";
-export const LOG_RPCS = IS_FORK ? [RPC] : ["https://xlayer.drpc.org", "https://xlayer-mainnet.rpc.sentio.xyz"];
+export const LOG_RPCS = IS_FORK ? [[RPC, 90_000]] : [["https://xlayer-mainnet.rpc.sentio.xyz", 90_000], ["https://xlayer.drpc.org", 9_000]];   // [url, max getLogs range]
 export const EXPLORER = "https://www.oklink.com/xlayer";
 export const FACTORY = "0x1f09DAeFA827f02CBb40967cc91b259763760761";
 
@@ -109,12 +109,12 @@ export async function loadSeason(seasonArg) {
 export async function findMatchTx(season, a, b) {
   const topics = [ethers.id("MatchPlayed(uint256,uint256,uint256,uint8,uint256)"),
     ethers.toBeHex(season, 32), ethers.toBeHex(a, 32), ethers.toBeHex(b, 32)];
-  for (const url of LOG_RPCS) {
+  for (const [url, span] of LOG_RPCS) {
     try {
       const p = new ethers.JsonRpcProvider(url, CHAIN_ID, { staticNetwork: true });
       const latest = await p.getBlockNumber();
-      for (let from = DEPLOY.deployBlock; from <= latest; from += 90_000) {
-        const logs = await p.getLogs({ address: DEPLOY.arena, topics, fromBlock: from, toBlock: Math.min(from + 89_999, latest) });
+      for (let from = DEPLOY.deployBlock; from <= latest; from += span) {
+        const logs = await p.getLogs({ address: DEPLOY.arena, topics, fromBlock: from, toBlock: Math.min(from + span - 1, latest) });
         if (logs.length) return logs[0].transactionHash;
       }
       return null;

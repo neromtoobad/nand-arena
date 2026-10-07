@@ -14,3 +14,7 @@ video/out/
 video/score.default.js
 submission/FORM.md
 submission/X_POST.md
+design/*.png
+design/*.jpg
+design/node_modules/
+design/package*.json
