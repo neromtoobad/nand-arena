@@ -1,0 +1,470 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>NAND Arena — film</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Inter:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=block" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0b0918; }
+  body { font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
+  .d { font-family: "Lilita One", sans-serif; font-weight: 400; text-transform: uppercase; line-height: .9; letter-spacing: .005em; }
+  .m { font-family: "JetBrains Mono", monospace; letter-spacing: .04em; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  .scene { position: absolute; inset: 0; display: none; overflow: hidden; }
+  .fill { position: absolute; inset: 0; }
+  .dots-l { background-image: radial-gradient(rgba(255,255,255,.12) 2px, transparent 2.4px); background-size: 40px 40px; }
+  .dots-d { background-image: radial-gradient(rgba(23,19,43,.12) 2px, transparent 2.4px); background-size: 40px 40px; }
+  .ltr { display: inline-block; }
+  canvas { position: absolute; }
+  /* HUD */
+  #hud { position: absolute; inset: 0; pointer-events: none; z-index: 50; font-family: "JetBrains Mono", monospace; font-size: 17px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  #hud .c { position: absolute; display: flex; gap: 14px; align-items: center; }
+  #hud .tl { left: 54px; top: 42px; } #hud .tr { right: 54px; top: 42px; } #hud .bl { left: 54px; bottom: 38px; } #hud .br { right: 54px; bottom: 38px; }
+  #hud .mark { position: absolute; width: 22px; height: 22px; border-color: currentColor; border-style: solid; opacity: .7; }
+  #hud .dot { width: 11px; height: 11px; border-radius: 50%; background: #2ee6c2; box-shadow: 0 0 12px #2ee6c2; }
+  #wave { position: absolute; left: 50%; bottom: 40px; width: 640px; height: 30px; transform: translateX(-50%); }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 40; pointer-events: none; }
+  .stamp { position: absolute; font-family: "Lilita One"; text-transform: uppercase; border: 10px solid currentColor; border-radius: 26px; padding: 18px 40px 8px; font-size: 130px; line-height: 1; }
+  .codeline { font-family: "JetBrains Mono", monospace; font-size: 34px; line-height: 64px; white-space: pre; }
+  .k { color: #2ee6c2; } .in { color: #ffd23f; } .o { color: #ff4f8b; } .op { color: #8f88b8; } .id { color: #e9e6f8; }
+  .head { position: absolute; overflow: hidden; border: 6px solid #17132b; border-radius: 34px; }
+  .head img { position: absolute; left: 50%; top: 0; width: 170%; transform: translate(-50%, -3%); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S1 cold open: a cycle head bounces in and draws its trail -->
+  <div class="scene" id="s-cold" style="background:#0b0918"><div class="fill dots-l" style="opacity:.5"></div><canvas id="cv-cold" width="1920" height="1080"></canvas>
+    <div id="cold-cap" class="m" style="position:absolute;left:0;right:0;top:760px;text-align:center;color:#8f88b8;font-size:24px;letter-spacing:.3em"></div>
+  </div>
+
+  <!-- S2 title -->
+  <div class="scene" id="s-title" style="background:#6c3cff"><div class="fill dots-l"></div>
+    <div id="title-wrap" style="position:absolute;left:150px;top:250px">
+      <div id="t1" class="d" style="font-size:220px;color:#fff6e9;text-shadow:0 14px 0 #17132b;white-space:nowrap"></div>
+      <div id="t2" class="d" style="font-size:220px;color:#fff6e9;text-shadow:0 14px 0 #17132b;white-space:nowrap;margin-top:20px"></div>
+    </div>
+    <img id="title-bot" src="art/hero.webp" style="position:absolute;right:120px;bottom:-60px;height:820px;filter:hue-rotate(var(--hue)) drop-shadow(0 30px 40px rgba(23,19,43,.45))" />
+  </div>
+
+  <!-- S3 write -->
+  <div class="scene" id="s-write" style="background:#17132b"><div class="fill dots-l" style="opacity:.4"></div>
+    <div style="position:absolute;left:130px;top:250px">
+      <div id="w1" class="d" style="font-size:250px;color:#fff6e9"></div>
+      <div id="w2" class="d" style="font-size:120px;color:#2ee6c2;margin-top:24px"></div>
+    </div>
+    <div id="code" style="position:absolute;right:120px;top:250px;width:920px;height:560px;border-radius:36px;background:#0b0918;border:6px solid #000;box-shadow:0 16px 0 #000;overflow:hidden">
+      <div style="height:64px;display:flex;align-items:center;gap:12px;padding-left:28px;border-bottom:3px solid #2d2850"><i style="width:18px;height:18px;border-radius:50%;background:#ff4f8b"></i><i style="width:18px;height:18px;border-radius:50%;background:#ffd23f"></i><i style="width:18px;height:18px;border-radius:50%;background:#2ee6c2"></i><span class="m" style="color:#8f88b8;font-size:18px;margin-left:12px">POLAR-CLOCK.NAND</span></div>
+      <div id="code-lines" style="padding:34px 40px"></div>
+    </div>
+  </div>
+
+  <!-- S4 compile: the gate wall -->
+  <div class="scene" id="s-compile" style="background:#0b0918"><canvas id="cv-wall" width="1920" height="1080"></canvas>
+    <div id="cmp-plate" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;background:#0b0918;border:6px solid #2ee6c2;border-radius:40px;padding:34px 70px 30px;box-shadow:0 0 80px rgba(46,230,194,.35)">
+      <div id="cmp-n" class="d" style="font-size:260px;color:#2ee6c2"></div>
+      <div class="d" style="font-size:72px;color:#fff6e9;margin-top:6px">NAND gates</div>
+      <div class="m" style="font-size:22px;color:#8f88b8;margin-top:14px">20 NAND · 1 LATCH · 144 BYTES</div>
+    </div>
+  </div>
+
+  <!-- S5 tape out -->
+  <div class="scene" id="s-tape" style="background:#ffd23f"><div class="fill dots-d"></div>
+    <svg id="tape-svg" width="1920" height="1080" style="position:absolute;inset:0">
+      <circle cx="960" cy="520" r="300" fill="#fff6e9" stroke="#17132b" stroke-width="10" />
+      <circle cx="960" cy="520" r="300" fill="none" stroke="rgba(23,19,43,.15)" stroke-width="34" />
+      <circle id="tape-arc" cx="960" cy="520" r="300" fill="none" stroke="#17132b" stroke-width="34" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" transform="rotate(-90 960 520)" />
+    </svg>
+    <div id="tape-sq"></div>
+    <div id="tape-txt" style="position:absolute;left:0;right:0;top:400px;text-align:center">
+      <div class="d" style="font-size:120px;color:#17132b">Tape out</div>
+      <div id="tape-n" class="m" style="font-size:30px;font-weight:700;color:#3b3557;margin-top:16px"></div>
+    </div>
+    <div id="tape-ok" class="d" style="position:absolute;left:0;right:0;top:880px;text-align:center;font-size:64px;color:#17132b"></div>
+  </div>
+
+  <!-- S6 arena -->
+  <div class="scene" id="s-arena" style="background:#0b0918"><div class="fill dots-l" style="opacity:.35"></div>
+    <div id="arena-cam" style="position:absolute;inset:0;transform-origin:960px 540px">
+      <canvas id="cv-board" width="1600" height="1600" style="left:560px;top:140px;width:800px;height:800px;border-radius:30px;box-shadow:0 0 0 6px #000, 0 0 90px rgba(46,230,194,.18)"></canvas>
+      <div class="head" style="left:140px;top:300px;width:300px;height:300px;background:#ffd3e2;border-color:#000"><img src="art/coward.webp" /></div>
+      <div class="d" style="position:absolute;left:140px;top:630px;width:300px;text-align:center;font-size:64px;color:#ff8db3">Coward</div>
+      <div class="head" style="right:140px;top:300px;width:300px;height:300px;background:#c9fff3;border-color:#000"><img src="art/hero.webp" style="filter:hue-rotate(var(--hue))" /></div>
+      <div class="d" style="position:absolute;right:120px;top:630px;width:340px;text-align:center;font-size:64px;color:#4ff2d4">Polar Clock</div>
+    </div>
+    <div style="position:absolute;left:0;right:0;top:952px;text-align:center"><span id="arena-tick" class="d" style="display:inline-block;padding:6px 26px 4px;border-radius:999px;background:#17132b;border:4px solid #000;box-shadow:0 6px 0 #000;font-size:40px;color:#ffd23f"></span></div>
+    <div id="ko" class="d" style="position:absolute;inset:0;display:grid;place-items:center;font-size:330px;color:#ffd23f;-webkit-text-stroke:14px #17132b;text-shadow:0 22px 0 #17132b;opacity:0"><span>K.O.!</span></div>
+  </div>
+
+  <!-- S7 fight card -->
+  <div class="scene" id="s-fight"><div id="fight-bg" class="fill"></div><div class="fill dots-d"></div>
+    <img id="fc-me" src="art/hero.webp" style="position:absolute;left:150px;bottom:-40px;height:860px;filter:hue-rotate(var(--hue)) drop-shadow(0 30px 30px rgba(23,19,43,.35))" />
+    <div id="fc-opps"><img class="fc-opp" data-n="cautious" src="art/cautious.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="lookahead" src="art/lookahead.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="hunter" src="art/hunter.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="coward" src="art/coward.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="weaver" src="art/weaver.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /></div>
+    <div id="fc-vs" class="d" style="position:absolute;left:50%;top:370px;transform:translateX(-50%);font-size:150px;color:#fff6e9;-webkit-text-stroke:8px #17132b;text-shadow:0 12px 0 #17132b">VS</div>
+    <div id="fc-stamp" class="stamp" style="left:50%;top:600px"></div>
+    <div id="fc-name" class="d" style="position:absolute;right:120px;top:120px;font-size:96px;color:#17132b;text-align:right"></div>
+    <div id="fc-meta" class="m" style="position:absolute;right:124px;top:228px;font-size:26px;font-weight:700;color:#17132b;text-align:right"></div>
+    <div id="fc-sum" class="fill" style="background:#17132b;display:none">
+      <div class="fill dots-l" style="opacity:.4"></div>
+      <div style="position:absolute;left:0;right:0;top:300px;text-align:center">
+        <div id="fc-pts" class="d" style="font-size:300px;color:#ffd23f;text-shadow:0 16px 0 #000"></div>
+        <div id="fc-wdl" class="d" style="font-size:80px;color:#fff6e9;margin-top:20px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S8 rings -->
+  <div class="scene" id="s-rings" style="background:#0b0918"><div class="fill dots-l" style="opacity:.35"></div>
+    <svg width="1920" height="1080" style="position:absolute;inset:0" id="rings">
+      <defs>
+        <path id="r1" d="M960,540 m-420,0 a420,420 0 1,1 840,0 a420,420 0 1,1 -840,0" />
+        <path id="r2" d="M960,540 m-320,0 a320,320 0 1,1 640,0 a320,320 0 1,1 -640,0" />
+        <path id="r3" d="M960,540 m-225,0 a225,225 0 1,1 450,0 a225,225 0 1,1 -450,0" />
+      </defs>
+      <g id="g1"><text font-family="Lilita One" font-size="64" fill="#fff6e9" letter-spacing="6" textLength="2627" lengthAdjust="spacing"><textPath href="#r1">REFEREED ON-CHAIN ✦ X LAYER ✦ CHAIN 196 ✦ REFEREED ON-CHAIN ✦ X LAYER ✦ CHAIN 196 ✦ </textPath></text></g>
+      <g id="g2"><text font-family="Lilita One" font-size="56" fill="#2ee6c2" letter-spacing="6" textLength="1999" lengthAdjust="spacing"><textPath href="#r2">NAND ✦ LATCH ✦ TAPE OUT ✦ NAND ✦ LATCH ✦ TAPE OUT ✦ </textPath></text></g>
+      <g id="g3"><text font-family="JetBrains Mono" font-weight="700" font-size="30" fill="#ffd23f" letter-spacing="10" textLength="1394" lengthAdjust="spacing"><textPath href="#r3">EVERY MOVE · VERIFIABLE · EVERY MOVE · VERIFIABLE · EVERY MOVE · VERIFIABLE · </textPath></text></g>
+    </svg>
+    <div id="ring-core" style="position:absolute;left:810px;top:390px;width:300px;height:300px;border-radius:50%;background:#2ee6c2;border:8px solid #000;overflow:hidden;box-shadow:0 0 90px rgba(46,230,194,.45)"><img src="art/hero.webp" style="position:absolute;left:50%;top:4%;width:170%;transform:translateX(-50%);filter:hue-rotate(var(--hue))" /></div>
+  </div>
+
+  <!-- S9 leaderboard -->
+  <div class="scene" id="s-board" style="background:#fff6e9"><div class="fill dots-d"></div>
+    <div class="d" style="position:absolute;left:150px;top:120px;font-size:110px;color:#17132b">Season 1 <span style="color:#6c3cff">leaderboard</span></div>
+    <div id="lb" style="position:absolute;left:150px;right:150px;top:290px;height:700px"></div>
+  </div>
+
+  <!-- S10 stats -->
+  <div class="scene" id="s-stats"><div id="st-bg" class="fill"></div><div id="st-dots" class="fill"></div>
+    <div style="position:absolute;left:150px;right:150px;top:300px">
+      <div id="st-big" class="d" style="font-size:300px;white-space:nowrap"></div>
+      <div id="st-sub" class="d" style="font-size:96px;margin-top:30px;white-space:nowrap"></div>
+    </div>
+  </div>
+
+  <!-- S11 end -->
+  <div class="scene" id="s-end" style="background:#6c3cff"><div class="fill dots-l"></div>
+    <div style="position:absolute;left:150px;top:150px;width:1000px">
+      <div id="e-tag" class="m" style="display:inline-block;background:#17132b;color:#fff;border-radius:999px;padding:14px 26px;font-size:24px;font-weight:700;letter-spacing:.14em">● SEASON 1 LIVE ON X LAYER</div>
+      <div id="e1" class="d" style="font-size:190px;color:#fff6e9;text-shadow:0 14px 0 #17132b;margin-top:40px;white-space:nowrap"></div>
+      <div id="e2" class="d" style="font-size:190px;color:#ffd23f;text-shadow:0 14px 0 #17132b;margin-top:14px;white-space:nowrap"></div>
+      <div id="e-url" class="d" style="display:inline-block;margin-top:56px;background:#ffd23f;color:#17132b;border:8px solid #17132b;box-shadow:0 12px 0 #17132b;border-radius:999px;padding:22px 50px 14px;font-size:64px">nandarena.nerom.site</div>
+    </div>
+    <div id="squad" style="position:absolute;right:30px;bottom:0;width:820px;height:980px"></div>
+  </div>
+
+  <div id="flash"></div>
+  <div id="hud">
+    <div class="mark" style="left:30px;top:26px;border-width:3px 0 0 3px"></div><div class="mark" style="right:30px;top:26px;border-width:3px 3px 0 0"></div>
+    <div class="mark" style="left:30px;bottom:26px;border-width:0 0 3px 3px"></div><div class="mark" style="right:30px;bottom:26px;border-width:0 3px 3px 0"></div>
+    <div class="c tl"><span class="dot"></span><span>NAND ARENA — SEASON 01</span></div>
+    <div class="c tr"><span id="hud-scene"></span></div>
+    <div class="c bl"><span id="hud-tc"></span></div>
+    <div class="c br"><span>X LAYER · CHAIN 196</span></div>
+    <canvas id="wave" width="1280" height="60"></canvas>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="wave.js"></script>
+<script>
+const D = window.DATA, W = window.WAVE, M = D.match;
+document.documentElement.style.setProperty('--hue', D.hue + 'deg');
+const FPS = 60, B = W.beat, DUR = W.dur, TOTAL = Math.round(DUR * FPS);
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k = clamp(k), k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const out = (k) => 1 - Math.pow(1 - clamp(k), 3);
+// damped spring step response, 0 -> 1 from t = 0
+function sp(t, w = 16, z = .62) { if (t <= 0) return 0; const wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + (z * w / wd) * Math.sin(wd * t)); }
+// deterministic hash noise
+const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+/* ---- letters ---- */
+function letters(el, text) { el.innerHTML = [...text].map((c) => `<span class="ltr">${c === ' ' ? '&nbsp;' : c}</span>`).join(''); return [...el.children]; }
+function drop(spans, lt, stagger = .035, from = -140, extra = 1) {
+  spans.forEach((s, i) => { const k = sp(lt - i * stagger, 18, .55); s.style.transform = `translateY(${(1 - k) * from}px) scale(${(.6 + .4 * Math.min(1.1, k)) * extra})`; s.style.opacity = clamp(k * 2); const bl = clamp(1 - k) * 14; s.style.filter = bl > .3 ? `blur(${bl.toFixed(2)}px)` : 'none'; });
+}
+const T1 = letters($('t1'), 'Your bot'), T2 = letters($('t2'), 'is a chip.');
+T2.slice(5).forEach((s) => (s.style.color = '#ffd23f'));
+const W1 = letters($('w1'), 'Write'), W2 = letters($('w2'), 'the logic.');
+const E1 = letters($('e1'), 'Your bot'), E2 = letters($('e2'), 'is a chip.');
+
+/* ---- code ---- */
+const LINES = D.src.split('\n');
+function tok(line) {
+  return line.split(/(\s+|[()!&|^=])/).filter((x) => x !== '').map((w) => {
+    const cls = /^(mem|let|next)$/.test(w) ? 'k' : /^(F|F2|L|R|RL|OL|OF|COIN)$/.test(w) ? 'in' : /^(left|right)$/.test(w) ? 'o' : /^[()!&|^=]$/.test(w) ? 'op' : 'id';
+    return [...w].map((ch) => `<span class="${cls}">${ch === ' ' ? ' ' : ch}</span>`).join('');
+  }).join('');
+}
+$('code-lines').innerHTML = LINES.map((l) => `<div class="codeline">${tok(l)}</div>`).join('');
+const CODE = [...document.querySelectorAll('#code-lines span')];
+
+/* ---- tape-out squares ---- */
+$('tape-sq').innerHTML = Array.from({ length: 21 }, (_, i) => `<div id="sq${i}" style="position:absolute;width:44px;height:44px;border-radius:9px;border:4px solid #17132b;background:${i === 0 ? '#ffd23f' : '#2ee6c2'}"></div>`).join('');
+const SQ = Array.from({ length: 21 }, (_, i) => { const a = (i / 21) * Math.PI * 2 + .3; const r = 470 + hash(i) * 90; return { x: 960 + Math.cos(a) * r * 1.35, y: 520 + Math.sin(a) * r * .82, el: $('sq' + i), d: hash(i + 9) * .55 }; });
+
+/* ---- fight card ---- */
+const ART = { Cautious: 'cautious', Lookahead: 'lookahead', Hunter: 'hunter', Coward: 'coward', Weaver: 'weaver' };
+const FC_BG = ['#fff6e9', '#ff4f8b', '#2ee6c2', '#6c3cff', '#ffd23f'];
+const RES = { W: ['Win', '#0f8a74'], D: ['Draw', '#5a5480'], L: ['Loss', '#c4224f'] };
+const PTS = D.spar.reduce((a, s) => a + (s.res === 'W' ? 3 : s.res === 'D' ? 1 : 0), 0);
+const WDL = ['W', 'D', 'L'].map((k) => D.spar.filter((s) => s.res === k).length);
+
+/* ---- leaderboard ---- */
+const BEFORE = [['Cautious', 5, 7], ['Lookahead', 13, 5], ['Coward', 17, 5], ['Weaver', 31, 5], ['Hunter', 21, 3]];
+const gain = { W: 0, D: 1, L: 3 };
+const ROWS = BEFORE.map(([n, g, p]) => ({ n, g, p0: p, p1: p + gain[D.spar.find((s) => s.name === n).res] })).concat([{ n: 'Polar Clock', g: D.gates, p0: 0, p1: PTS, me: true }]);
+const ORD0 = ROWS.map((r) => r.n), ORD1 = [...ROWS].sort((a, b) => b.p1 - a.p1 || a.g - b.g).map((r) => r.n);
+const TONE = { Cautious: '#c6f7cf', Lookahead: '#cfe6ff', Hunter: '#ffe0bf', Coward: '#ffd3e2', Weaver: '#e3d6ff' };
+$('lb').innerHTML = ROWS.map((r, i) => `
+  <div id="lr${i}" style="position:absolute;left:0;right:0;height:96px;display:flex;align-items:center;gap:26px;border:5px solid #17132b;border-radius:26px;background:${r.me ? '#c9fff3' : '#fff'};padding:0 34px 0 18px;box-shadow:0 7px 0 #17132b">
+    <div id="lm${i}" class="d" style="width:68px;height:68px;border-radius:50%;border:5px solid #17132b;display:grid;place-items:center;font-size:34px;flex:none"></div>
+    <div style="position:relative;width:76px;height:76px;border-radius:20px;border:4px solid #17132b;overflow:hidden;background:${r.me ? '#c9fff3' : TONE[r.n]};flex:none"><img src="art/${r.me ? 'hero' : ART[r.n]}.webp" style="position:absolute;left:50%;top:0;width:170%;transform:translate(-50%,-3%);${r.me ? 'filter:hue-rotate(var(--hue))' : ''}" /></div>
+    <div class="d" style="font-size:52px;color:#17132b">${r.n}</div>
+    <div class="m" style="font-size:20px;font-weight:700;padding:6px 14px;border:3px solid #17132b;border-radius:999px;background:${r.me ? '#2ee6c2' : '#fbead3'}">${r.me ? 'PLAYER' : 'HOUSE'}</div>
+    <div style="flex:1"></div>
+    <div class="m" style="font-size:24px;color:#7c7594">${r.g} gates</div>
+    <div id="lp${i}" class="d" style="width:110px;text-align:right;font-size:70px;color:#17132b"></div>
+  </div>`).join('');
+
+/* ---- end squad ---- */
+const SQUAD = [['weaver', 330, 40, 260], ['cautious', 40, 230, 300], ['coward', 600, 250, 290], ['lookahead', -20, 560, 360], ['hunter', 520, 560, 370], ['hero', 180, 400, 560]];
+$('squad').innerHTML = SQUAD.map(([n, x, y, h], i) => `<img id="sq-${i}" src="art/${n}.webp" style="position:absolute;left:${x}px;top:${y}px;height:${h}px;${n === 'hero' ? 'filter:hue-rotate(var(--hue)) drop-shadow(0 26px 30px rgba(23,19,43,.4))' : 'filter:drop-shadow(0 20px 24px rgba(23,19,43,.35))'}" />`).join('');
+
+/* ---- canvases ---- */
+const cold = $('cv-cold').getContext('2d'), wall = $('cv-wall').getContext('2d'), board = $('cv-board').getContext('2d'), wave = $('wave').getContext('2d');
+
+/* ---- schedule (in beats) ---- */
+const SCENES = [
+  ['cold', 0, 'Boot'], ['title', 8, 'Your bot'], ['write', 12, 'Write'], ['compile', 16, 'Compile'], ['tape', 20, 'Tape out'],
+  ['arena', 24, 'Arena'], ['fight', 32, 'Fight card'], ['rings', 40, 'Referee'], ['board', 44, 'Leaderboard'], ['stats', 48, 'Terms'], ['end', 56, 'Play'],
+];
+const DARK = new Set(['cold', 'write', 'compile', 'arena', 'rings']);
+
+/* =========================================================== scene renderers (lb = beats into scene) */
+function renderCold(lb) {
+  const c = cold; c.clearRect(0, 0, 1920, 1080);
+  const base = 660, R = 26;
+  // bounce: drop from top, land on beats 1, 2, 3 with decaying height; from beat 4 the head rides the floor as a light cycle
+  const path = [];
+  const ballAt = (b) => {
+    if (b < 1) { const k = b; return { x: 360 + 120 * k, y: lerp(-80, base - R, k * k) }; }
+    if (b < 4) { const i = Math.floor(b), f = b - i, hgt = [0, 300, 150, 70][i]; return { x: 480 + (b - 1) * 120, y: base - R - hgt * 4 * f * (1 - f) }; }
+    return null;
+  };
+  if (lb < 4.05) {
+    for (let k = 0; k < 18; k++) { const p = ballAt(lb - k * .03); if (p) { c.globalAlpha = (1 - k / 18) * .35; c.fillStyle = '#2ee6c2'; c.beginPath(); c.arc(p.x, p.y, R * (1 - k / 30), 0, 7); c.fill(); } }
+    c.globalAlpha = 1;
+    const p = ballAt(Math.min(lb, 3.999));
+    const near = [1, 2, 3].some((i) => Math.abs(lb - i) < .07);
+    const sx = near ? 1.45 : 1, sy = near ? .62 : 1;
+    c.save(); c.translate(p.x, p.y + (near ? R * .38 : 0)); c.scale(sx, sy); c.shadowColor = '#4ff2d4'; c.shadowBlur = 40; c.fillStyle = '#4ff2d4'; c.beginPath(); c.arc(0, 0, R, 0, 7); c.fill(); c.restore();
+    c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = 3; c.beginPath(); c.moveTo(200, base); c.lineTo(1720, base); c.stroke();
+  }
+  if (lb >= 4) {
+    // light-cycle run: a polyline that turns on beats, then a pink rival from the right
+    const pts = [[840, base - R], [1240, base - R], [1240, 380], [1560, 380]];
+    const segT = [4, 5.2, 6.1, 7.1];
+    const draw = (pts, segT, col, glow, b) => {
+      c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = col; c.lineWidth = 34; c.shadowColor = glow; c.shadowBlur = 36;
+      c.beginPath(); c.moveTo(...pts[0]); let head = pts[0];
+      for (let i = 1; i < pts.length; i++) { const k = clamp((b - segT[i - 1]) / (segT[i] - segT[i - 1])); if (k <= 0) break; head = [lerp(pts[i - 1][0], pts[i][0], ease(k)), lerp(pts[i - 1][1], pts[i][1], ease(k))]; c.lineTo(...head); if (k < 1) break; }
+      c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(head[0], head[1], 20, 0, 7); c.fill(); c.restore(); return head;
+    };
+    draw(pts, segT, '#12b89c', '#4ff2d4', lb);
+    if (lb > 5.4) draw([[1720, 220], [1720, 380], [1600, 380]], [5.4, 6.2, 7.2], '#ff4f8b', '#ff8db3', lb);
+  }
+  const cap = 'every bot is a circuit';
+  $('cold-cap').textContent = lb > 1 ? cap.slice(0, Math.floor(clamp((lb - 1) / 2.4) * cap.length)) : '';
+}
+
+function renderTitle(lb) {
+  const punch = lb > 3.5 ? 1 + .06 * out((lb - 3.5) * 2) : 1;
+  drop(T1, lb * B, .045, -140, punch); drop(T2, (lb - 1) * B, .045, -140, punch);
+  const kb = sp((lb - 2) * B, 11, .55); $('title-bot').style.transform = `translateY(${(1 - kb) * 900}px) rotate(${(1 - kb) * -14 + Math.sin(lb * 1.4) * 1.5}deg)`;
+}
+
+function renderWrite(lb) {
+  drop(W1, lb * B, .05); drop(W2, (lb - .75) * B, .03, -80);
+  const typed = Math.floor(clamp((lb - .5) / 3) * CODE.length);
+  CODE.forEach((s, i) => (s.style.visibility = i < typed ? 'visible' : 'hidden'));
+  const kc = sp(lb * B, 14, .7); $('code').style.transform = `translateX(${(1 - kc) * 1100}px) rotate(${(1 - kc) * 6}deg)`;
+}
+
+function renderCompile(lb) {
+  const c = wall, cols = 48, rows = 27, s = 40;
+  c.fillStyle = '#0b0918'; c.fillRect(0, 0, 1920, 1080);
+  const cx = 23.5, cy = 13, front = lb * 9; // wave radius in cells
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const d = Math.hypot(x - cx, (y - cy) * 1.15), h = hash(x * 97 + y * 13);
+    let on = 0;
+    if (d < front) on = (Math.floor(lb * 4 + h * 8) % 3 === 0 || h > .55) ? 1 : 0;
+    const edge = Math.abs(d - front) < 1.3;
+    c.fillStyle = edge ? '#fff6e9' : on ? (h > .86 ? '#ffd23f' : h > .12 ? '#2ee6c2' : '#ff4f8b') : '#1d1838';
+    const pad = edge ? 4 : 6; c.globalAlpha = on || edge ? 1 : .9;
+    c.beginPath(); c.roundRect(x * s + 4 + pad / 2, y * s + 6 + pad / 2, s - pad, s - pad, 6); c.fill();
+  }
+  c.globalAlpha = 1;
+  const kp = sp((lb - .2) * B, 15, .6); $('cmp-plate').style.transform = `translate(-50%,-50%) scale(${.5 + .5 * kp})`; $('cmp-plate').style.opacity = clamp(kp * 2);
+  $('cmp-n').textContent = String(Math.round(21 * out(lb / 2)));
+}
+
+function renderTape(lb) {
+  const k = clamp(lb / 3.4);
+  $('tape-arc').style.strokeDashoffset = 1 - ease(k);
+  SQ.forEach((q, i) => {
+    const kk = clamp((lb - .2 - q.d * 2.6) / .9); const e = ease(kk);
+    q.el.style.left = lerp(q.x, 938, e) + 'px'; q.el.style.top = lerp(q.y, 498, e) + 'px';
+    q.el.style.transform = `scale(${1 - e}) rotate(${e * 260}deg)`; q.el.style.opacity = kk >= 1 ? 0 : 1;
+  });
+  const left = SQ.filter((q) => clamp((lb - .2 - q.d * 2.6) / .9) < 1).length;
+  $('tape-n').textContent = `${left} transistors left to burn`;
+  const ko = sp((lb - 3.4) * B, 18, .5); $('tape-ok').textContent = lb > 3.4 ? '✓ circuit #6 · on X Layer' : '';
+  $('tape-ok').style.transform = `scale(${.4 + .6 * ko})`;
+  $('tape-txt').style.transform = `scale(${1 + .05 * Math.sin(lb * Math.PI * 2) * (1 - k)})`;
+}
+
+function renderArena(lb) {
+  const t0 = .25, t1 = 6, ticks = M.ticks;
+  const tt = clamp((lb - t0) / (t1 - t0)) * ticks;
+  drawBoard(tt);
+  $('arena-tick').textContent = lb < t1 ? `tick ${String(Math.floor(tt)).padStart(2, '0')} / ${ticks}` : 'Polar Clock wins';
+  const zoom = lerp(1.18, 1, ease(lb / 6));
+  let shake = '';
+  if (lb > 6 && lb < 6.8) { const a = (1 - (lb - 6) / .8) * 18; shake = ` translate(${(hash(Math.floor(lb * 60)) - .5) * a}px, ${(hash(Math.floor(lb * 60) + 3) - .5) * a}px)`; }
+  $('arena-cam').style.transform = `scale(${zoom})${shake}`;
+  const kk = sp((lb - 6) * B, 16, .45); $('ko').style.opacity = lb > 6 ? 1 : 0; $('ko').firstElementChild.style.transform = `rotate(-7deg) scale(${2.2 - 1.2 * kk})`;
+  flash(lb > 6 ? clamp(1 - (lb - 6) * 3) * .85 : lb < .35 ? (1 - lb / .35) : 0);
+}
+
+function drawBoard(t) {
+  const c = board, px = 1600, cell = px / 16;
+  c.fillStyle = '#111915'; c.fillRect(0, 0, px, px);
+  c.fillStyle = '#1e2b26';
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { c.beginPath(); c.arc((x + .5) * cell, (y + .5) * cell, cell * .06, 0, 7); c.fill(); }
+  const ticks = M.ticks, k = Math.floor(clamp(t, 0, ticks)), frac = clamp(t, 0, ticks) - k, done = k >= ticks;
+  const C = (p) => [(p[0] + .5) * cell, (p[1] + .5) * cell];
+  const trail = (pos, col, glow) => {
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = col; c.lineWidth = cell * .42; c.shadowColor = glow; c.shadowBlur = cell * .6;
+    c.beginPath(); c.moveTo(...C(pos[0])); const lastFull = Math.min(k, ticks - 1);
+    for (let i = 1; i <= lastFull; i++) c.lineTo(...C(pos[i]));
+    let head; if (!done) { const f = C(pos[k]), n = C(pos[k + 1]), q = k === ticks - 1 ? Math.min(frac, .55) : frac; head = [f[0] + (n[0] - f[0]) * q, f[1] + (n[1] - f[1]) * q]; } else { const f = C(pos[ticks - 1]), n = C(pos[ticks]); head = [f[0] + (n[0] - f[0]) * .55, f[1] + (n[1] - f[1]) * .55]; }
+    c.lineTo(...head); c.stroke(); c.restore(); return head;
+  };
+  const ha = trail(M.posA, '#ff4f8b', '#ff8db3'), hb = trail(M.posB, '#12b89c', '#4ff2d4');
+  const dot = (h, glow, dead) => { c.save(); c.fillStyle = dead ? '#fff' : glow; c.shadowColor = glow; c.shadowBlur = cell; c.beginPath(); c.arc(h[0], h[1], cell * .3, 0, 7); c.fill(); c.restore(); };
+  dot(ha, '#ff8db3', done && M.crash[0]); dot(hb, '#4ff2d4', done && M.crash[1]);
+}
+
+function renderFight(lb) {
+  if (lb < 5) {
+    $('fc-sum').style.display = 'none';
+    const i = Math.min(4, Math.floor(lb)), f = lb - i, s = D.spar[i];
+    $('fight-bg').style.background = FC_BG[i];
+    const ko = sp(f * B, 20, .6);
+    document.querySelectorAll('.fc-opp').forEach((im) => {
+      const on = im.dataset.n === ART[s.name]; im.style.display = on ? 'block' : 'none';
+      if (on) im.style.transform = `scaleX(-1) translateX(${(1 - ko) * -700}px) rotate(${(1 - ko) * -10}deg)`;
+    });
+    const km = sp(lb * B, 14, .7); $('fc-me').style.transform = `translateX(${(1 - km) * -900}px) translateY(${Math.sin(lb * Math.PI) * -10}px)`;
+    $('fc-name').textContent = s.name; $('fc-meta').textContent = `${s.gates} gates · ${s.ticks} ticks`;
+    const dark = FC_BG[i] === '#6c3cff' || FC_BG[i] === '#ff4f8b';
+    $('fc-name').style.color = dark ? '#fff6e9' : '#17132b'; $('fc-meta').style.color = dark ? '#fff6e9' : '#17132b';
+    const st = $('fc-stamp'); const r = RES[s.res]; const k2 = sp((f - .18) * B, 22, .5);
+    st.textContent = r[0]; st.style.color = dark && s.res !== 'W' ? '#fff6e9' : r[1]; st.style.background = dark ? 'rgba(23,19,43,.25)' : 'rgba(255,255,255,.75)';
+    st.style.opacity = f > .18 ? 1 : 0; st.style.transform = `translateX(-50%) rotate(-8deg) scale(${2.4 - 1.4 * k2})`;
+  } else {
+    $('fc-sum').style.display = 'block';
+    $('fc-pts').textContent = `${Math.round(PTS * out((lb - 5) / 1.2))} pts.`;
+    $('fc-pts').style.transform = `scale(${1.5 - .5 * sp((lb - 5) * B, 16, .55)})`;
+    $('fc-wdl').textContent = `${WDL[0]} wins · ${WDL[1]} draw · ${WDL[2]} loss`;
+    $('fc-wdl').style.opacity = clamp((lb - 5.6) * 3);
+  }
+}
+
+function renderRings(lb) {
+  const k = sp(lb * B, 9, .7);
+  const rot = (id, speed, dir) => $(id).setAttribute('transform', `rotate(${dir * lb * speed} 960 540) translate(960 540) scale(${.3 + .7 * k}) translate(-960 -540)`);
+  rot('g1', 18, 1); rot('g2', 28, -1); rot('g3', 40, 1);
+  const kc = sp((lb - .4) * B, 14, .5); $('ring-core').style.transform = `scale(${kc}) rotate(${(1 - kc) * -40}deg)`;
+}
+
+function renderBoard(lb) {
+  const climb = sp((lb - 1.4) * B, 9, .7);
+  ROWS.forEach((r, i) => {
+    const y0 = ORD0.indexOf(r.n) * 116, y1 = ORD1.indexOf(r.n) * 116, k = sp((lb - i * .12) * B, 16, .7), e = $('lr' + i);
+    e.style.top = lerp(y0, y1, climb) + 'px'; e.style.opacity = clamp(k * 1.5); e.style.transform = `translateX(${(1 - k) * 200}px) scale(${r.me ? 1 + .05 * Math.sin(Math.PI * clamp(climb)) : 1})`; e.style.zIndex = r.me ? 2 : 1;
+    $('lp' + i).textContent = String(Math.round(lerp(r.p0, r.p1, clamp(climb))));
+    const rank = (climb > .5 ? ORD1 : ORD0).indexOf(r.n); const md = $('lm' + i); md.textContent = rank + 1; md.style.background = ['#ffd23f', '#dfe6f2', '#f2b179'][rank] || '#fbead3';
+  });
+}
+
+const STATS = [
+  ['#6c3cff', '#fff6e9', '#ffd23f', (k) => Math.round(2097152 * out(k)).toLocaleString('en-US'), 'transistors. ever.', true],
+  ['#ffd23f', '#17132b', '#6c3cff', () => '0.0001 OKB', 'per transistor.', false],
+  ['#2ee6c2', '#17132b', '#17132b', (k) => Math.round(70 * out(k)) + '%', 'of every bot → prize pool.', false],
+  ['#17132b', '#fff6e9', '#2ee6c2', () => 'No owner.', 'prizes follow the NFT.', true],
+];
+function renderStats(lb) {
+  const i = Math.min(3, Math.floor(lb / 2)), l = lb - i * 2, [bg, fg, sub, big, txt, dark] = STATS[i];
+  $('st-bg').style.background = bg; $('st-dots').className = 'fill ' + (dark ? 'dots-l' : 'dots-d');
+  const k = sp(l * B, 18, .55);
+  const el = $('st-big'); el.textContent = big(clamp(l / .8)); el.style.color = fg; el.style.transform = `scale(${1.4 - .4 * k})`; el.style.transformOrigin = 'left center'; const bl = (1 - clamp(k)) * 10; el.style.filter = bl > .3 ? `blur(${bl.toFixed(2)}px)` : 'none';
+  el.style.textShadow = dark ? '0 14px 0 #000' : '0 14px 0 #17132b33';
+  const s = $('st-sub'); s.textContent = txt.slice(0, Math.ceil(clamp((l - .12) / .5) * txt.length)); s.style.color = sub;
+}
+
+function renderEnd(lb) {
+  SQUAD.forEach((_, i) => { const k = sp((lb - i * .18) * B, 11, .55); const e = $('sq-' + i); e.style.transform = `translateY(${(1 - k) * 700}px) rotate(${(1 - k) * (i % 2 ? 12 : -12) + Math.sin(lb * 1.6 + i) * 1.2}deg)`; });
+  drop(E1, (lb - .5) * B, .04); drop(E2, (lb - 1) * B, .04);
+  const ku = sp((lb - 2) * B, 16, .55); $('e-url').style.transform = `scale(${.3 + .7 * ku})`; $('e-url').style.opacity = clamp(ku * 2);
+  const kt = sp(lb * B, 14, .7); $('e-tag').style.opacity = kt; $('e-tag').style.transform = `translateY(${(1 - kt) * -40}px)`;
+}
+
+let flashV = 0; const flash = (v) => { flashV = Math.max(flashV, v); };
+
+/* =========================================================== frame */
+function render(t) {
+  const beat = t / B;
+  let si = 0; for (let i = 0; i < SCENES.length; i++) if (beat >= SCENES[i][1]) si = i;
+  const [id, b0, label] = SCENES[si];
+  SCENES.forEach(([sid]) => ($('s-' + sid).style.display = sid === id ? 'block' : 'none'));
+  const lb = beat - b0;
+  flashV = 0;
+  ({ cold: renderCold, title: renderTitle, write: renderWrite, compile: renderCompile, tape: renderTape, arena: renderArena, fight: renderFight, rings: renderRings, board: renderBoard, stats: renderStats, end: renderEnd })[id](lb);
+  // iris from the cold-open head into the title; white flash into the drop
+  if (id === 'cold' && lb > 7.4) flash(0);
+  if (id === 'tape' && lb > 3.6) flash(clamp((lb - 3.6) / .4) * .9);
+  if (id === 'title' && lb < .5) { $('s-title').style.clipPath = `circle(${out(lb / .5) * 1300}px at 1560px 380px)`; $('s-cold').style.display = 'block'; renderCold(8); } else $('s-title').style.clipPath = 'none';
+  $('flash').style.opacity = flashV;
+  // HUD
+  const dark = DARK.has(id) || (id === 'stats' && STATS[Math.min(3, Math.floor(lb / 2))][5]) || id === 'title' || id === 'end' || (id === 'fight' && (lb >= 5 || ['#6c3cff', '#ff4f8b'].includes(FC_BG[Math.min(4, Math.floor(lb))])));
+  const col = dark ? '#fff6e9' : '#17132b';
+  $('hud').style.color = col;
+  $('hud-scene').textContent = `${String(si + 1).padStart(2, '0')} / ${SCENES.length} — ${label}`;
+  const fr = Math.floor(t * FPS);
+  $('hud-tc').textContent = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}:${String(fr % FPS).padStart(2, '0')}  ·  BAR ${String(Math.floor(beat / 4) + 1).padStart(2, '0')}.${Math.floor(beat % 4) + 1}`;
+  const w = wave; w.clearRect(0, 0, 1280, 60); const n = W.env.length, bw = 1280 / n, ph = t / DUR;
+  for (let i = 0; i < n; i++) { const h = 6 + W.env[i] * 50; w.fillStyle = i / n < ph ? (dark ? '#2ee6c2' : '#6c3cff') : dark ? 'rgba(255,246,233,.28)' : 'rgba(23,19,43,.25)'; w.fillRect(i * bw, 30 - h / 2, Math.max(1, bw - 1.4), h); }
+}
+
+window.FPS = FPS;
+window.TOTAL_FRAMES = TOTAL;
+window.renderFrame = (f) => render(f / FPS);
+window.READY = (async () => {
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((im) => (im.complete ? 0 : new Promise((r) => { im.onload = im.onerror = r; }))));
+  // headless Chrome paints nothing for a scene whose first-ever frame is the screenshot, so paint every scene once up front
+  const tick = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  for (let f = 0; f < TOTAL; f += 15) { render(f / FPS); await tick(); }
+  render(0); await tick();
+})();
+const q = new URLSearchParams(location.search); if (q.has('t')) window.READY.then(() => render(Number(q.get('t'))));
+</script>
+</body>
+</html>
