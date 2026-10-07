@@ -55,6 +55,21 @@ export const addrUrl = a => `${EXPLORER}/address/${a}`;
 
 // ---------------------------------------------------------------- reads
 
+const MULTICALL3 = new ethers.Contract("0xcA11bde05977b3631167028862bE2a173976CA11",
+  ["function aggregate3((address target, bool allowFailure, bytes callData)[] calls) view returns ((bool success, bytes returnData)[])"], provider);
+
+/** calls: [contract, fnName, args][] -> decoded first return value of each, in chunks of 400. */
+async function multicall(calls) {
+  const out = [];
+  for (let i = 0; i < calls.length; i += 400) {
+    const chunk = calls.slice(i, i + 400);
+    const res = await MULTICALL3.aggregate3.staticCall(chunk.map(([c, fn, args]) =>
+      ({ target: c.target, allowFailure: false, callData: c.interface.encodeFunctionData(fn, args) })));
+    res.forEach((r, k) => { const [c, fn] = chunk[k]; out.push(c.interface.decodeFunctionResult(fn, r.returnData)[0]); });
+  }
+  return out;
+}
+
 const netlistCache = new Map();
 export async function netlistOf(circuitId) {
   const k = Number(circuitId);
@@ -75,8 +90,11 @@ export async function loadSeason(seasonArg) {
   }));
   const pairs = [];
   for (let a = 0; a < entries.length; a++) for (let b = a + 1; b < entries.length; b++) pairs.push([a, b]);
-  const results = await Promise.all(pairs.map(([a, b]) => arena.pairResult(season, a * 64 + b)));
+  const results = await multicall(pairs.map(([a, b]) => [arena, "pairResult", [season, a * 64 + b]]));
   const matches = pairs.map(([a, b], i) => ({ a, b, played: Number(results[i]) > 0, result: Number(results[i]) - 1 }));
+  const missing = entries.filter(e => !netlistCache.has(e.circuitId));
+  const fetched = await multicall(missing.map(e => [circuits, "netlist", [e.circuitId]]));
+  missing.forEach((e, i) => netlistCache.set(e.circuitId, Promise.resolve(ethers.getBytes(fetched[i]))));
   const netlists = await Promise.all(entries.map(e => netlistOf(e.circuitId)));
   entries.forEach((e, i) => { e.netlist = netlists[i]; });
   return {
