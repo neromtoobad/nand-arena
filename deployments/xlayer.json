@@ -1,0 +1,135 @@
+{
+  "chainId": 196,
+  "arena": "0x3fddB010FF747fFf0Fc7D1fA3e28aaFBA9bB3f64",
+  "processor": "0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5",
+  "transistors": "0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82",
+  "deployer": "0x68B75d5228b336E28346EC0A99A29290908B8Fb1",
+  "deployTx": "0x087e378915fc84f4b463f49eb92951dc7ff7f0f39f12a2a10320582a5be88fe1",
+  "deployBlock": 72612281,
+  "season1Close": 1791741600,
+  "houseBots": [
+    {
+      "name": "Cautious",
+      "circuitId": 1,
+      "entry": 0,
+      "gates": 5,
+      "tx": "0x12efd48e7c7cb9753f9dddfeb9c3bb82ded87a81932ccde9704688c705c12e4b",
+      "cost": "0.00246"
+    },
+    {
+      "name": "Lookahead",
+      "circuitId": 2,
+      "entry": 1,
+      "gates": 13,
+      "tx": "0xbf3be1e715e8080ad649756de6aa68640f32cb4cf6c5be769e3d5462ac86b2d5",
+      "cost": "0.00326"
+    },
+    {
+      "name": "Hunter",
+      "circuitId": 3,
+      "entry": 2,
+      "gates": 21,
+      "tx": "0x65b40f7c5304904e42e4fd8058a0d06f28cddd9abfaba3dd35eaab3abec51ad0",
+      "cost": "0.00406"
+    },
+    {
+      "name": "Coward",
+      "circuitId": 4,
+      "entry": 3,
+      "gates": 17,
+      "tx": "0x6fc1540796a44969e461b1d474a31f7c4a3935d69a356c24752fd84926df33b6",
+      "cost": "0.00366"
+    },
+    {
+      "name": "Weaver",
+      "circuitId": 5,
+      "entry": 4,
+      "gates": 31,
+      "tx": "0x28ec3642d20ebf39f4d62f791280b8c5f3f440148374ca446142ff916b480621",
+      "cost": "0.00572"
+    }
+  ],
+  "matches": [
+    {
+      "a": 0,
+      "b": 1,
+      "result": 0,
+      "ticks": 78,
+      "gas": 2377854,
+      "tx": "0xb320a90e7021d9146cb449504aa826f78287c7e819cee0dc4b3854774e9e0bf6"
+    },
+    {
+      "a": 0,
+      "b": 2,
+      "result": 1,
+      "ticks": 117,
+      "gas": 3764473,
+      "tx": "0x4a7470bec211b26b71042183270e778bb478f1a9806c1134497f5da850e0a584"
+    },
+    {
+      "a": 0,
+      "b": 3,
+      "result": 2,
+      "ticks": 37,
+      "gas": 1359002,
+      "tx": "0xcc538af741cd48250618cf345e18dc904ec281694714fd3acf9bd67794f8f822"
+    },
+    {
+      "a": 0,
+      "b": 4,
+      "result": 1,
+      "ticks": 48,
+      "gas": 1880432,
+      "tx": "0x43599d275b0af636f06d06a2ffede2b3fbd0e66724123a8519f41d43e7198036"
+    },
+    {
+      "a": 1,
+      "b": 2,
+      "result": 0,
+      "ticks": 96,
+      "gas": 3043068,
+      "tx": "0xca8129c27db407c6c8357bd81836d5b02930fc570e589c8e7d27c0f6f1261573"
+    },
+    {
+      "a": 1,
+      "b": 3,
+      "result": 1,
+      "ticks": 50,
+      "gas": 1844207,
+      "tx": "0x1116d32aeb23274878749b66c656297b01ef4afefa75e7b0b20ffebabae3319e"
+    },
+    {
+      "a": 1,
+      "b": 4,
+      "result": 2,
+      "ticks": 110,
+      "gas": 3845697,
+      "tx": "0xc52e37bda7df4d9fa7973e1694d0bb5d13eff4b8febbe93582bdc69da12e9024"
+    },
+    {
+      "a": 2,
+      "b": 3,
+      "result": 0,
+      "ticks": 65,
+      "gas": 2512452,
+      "tx": "0xa0aef630749a7937642ceac5e35d6c733132dcdaf00542c2edee8862092d7832"
+    },
+    {
+      "a": 2,
+      "b": 4,
+      "result": 0,
+      "ticks": 5,
+      "gas": 379522,
+      "tx": "0x432859d3f4cbba45e9ce95a4e9ac12ce1e15d7bde4e59ad65e492d5dc00c494a"
+    },
+    {
+      "a": 3,
+      "b": 4,
+      "result": 0,
+      "ticks": 32,
+      "gas": 1434518,
+      "tx": "0x88de7e188284903bb2fd32b4ce7e3e7e592a0edc6769280fd1beb1ddcd629de7"
+    }
+  ],
+  "potTx": "0x9e88e8cae2a6bd2ac573cbf4de4c351e53989aee8b50bc050762e291b895f54a"
+}

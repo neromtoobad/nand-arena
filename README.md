@@ -4,11 +4,19 @@ A hardware bot league on **TapeOut × X Layer**. Players write a few lines of lo
 
 Built for the **TapeOut Genesis Transistor Hackathon** (IGNIX × TapeOut × X Layer).
 
-- **App:** _link after deploy_
-- **Processor (Circuits contract):** _address after deploy_
-- **Transistors:** _address after deploy_
-- **NandArena (processor creator, league, referee):** _address after deploy_
-- **Deployment wallet:** `0x68B75d5228b336E28346EC0A99A29290908B8Fb1`
+**Live on X Layer mainnet (chain 196)**
+
+| | |
+|---|---|
+| App | https://arena.nerom.site |
+| **Processor (Circuits contract)** | [`0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5`](https://www.oklink.com/xlayer/address/0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5) |
+| Transistors (ERC-1155) | [`0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82`](https://www.oklink.com/xlayer/address/0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82) |
+| NandArena (processor creator, league, referee) | [`0x3fddB010FF747fFf0Fc7D1fA3e28aaFBA9bB3f64`](https://www.oklink.com/xlayer/address/0x3fddB010FF747fFf0Fc7D1fA3e28aaFBA9bB3f64) |
+| Deployment wallet | [`0x68B75d5228b336E28346EC0A99A29290908B8Fb1`](https://www.oklink.com/xlayer/address/0x68B75d5228b336E28346EC0A99A29290908B8Fb1) |
+| Deploy tx (`createCPU` via the TapeOut factory) | [`0x087e3789…88fe1`](https://www.oklink.com/xlayer/tx/0x087e378915fc84f4b463f49eb92951dc7ff7f0f39f12a2a10320582a5be88fe1) |
+| Keeper (plays matches; permissionless) | [`0xB9d86f9C3b1911f4C98d68299C7C1E0082970021`](https://www.oklink.com/xlayer/address/0xB9d86f9C3b1911f4C98d68299C7C1E0082970021) |
+
+Taped-out circuits at launch: the five house bots, circuits #1–#5 (Cautious, Lookahead, Hunter, Coward, Weaver), all refereed against each other on-chain. Season 1 entries close **2026-10-11 18:00 UTC**. Every circuit after #5 is a player's.
 
 ## Why this exists
 
