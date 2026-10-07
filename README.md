@@ -8,7 +8,7 @@ Built for the **TapeOut Genesis Transistor Hackathon** (IGNIX × TapeOut × X La
 
 | | |
 |---|---|
-| App | https://arena.nerom.site |
+| App | https://nandarena.nerom.site |
 | Demo video (32 s) | [submission/nand-arena-reel.mp4](https://github.com/neromtoobad/nand-arena/raw/main/submission/nand-arena-reel.mp4) |
 | **Processor (Circuits contract)** | [`0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5`](https://www.oklink.com/xlayer/address/0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5) |
 | Transistors (ERC-1155) | [`0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82`](https://www.oklink.com/xlayer/address/0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82) |
