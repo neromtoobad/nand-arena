@@ -9,11 +9,12 @@ Built for the **TapeOut Genesis Transistor Hackathon** (IGNIX × TapeOut × X La
 | | |
 |---|---|
 | App | https://arena.nerom.site |
-| Demo video (32 s) | [submission/nand-arena-reel.mp4](submission/nand-arena-reel.mp4) |
+| Demo video (32 s) | [submission/nand-arena-reel.mp4](https://github.com/neromtoobad/nand-arena/raw/main/submission/nand-arena-reel.mp4) |
 | **Processor (Circuits contract)** | [`0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5`](https://www.oklink.com/xlayer/address/0xCE56B1f17B7C270A0D5e0E8a097Ae5ab71D85BD5) |
 | Transistors (ERC-1155) | [`0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82`](https://www.oklink.com/xlayer/address/0x01A8FD25712Af75cb77308DE6A6792aCB5c3Ce82) |
 | NandArena (processor creator, league, referee) | [`0x3fddB010FF747fFf0Fc7D1fA3e28aaFBA9bB3f64`](https://www.oklink.com/xlayer/address/0x3fddB010FF747fFf0Fc7D1fA3e28aaFBA9bB3f64) |
-| Deployment wallet | [`0x68B75d5228b336E28346EC0A99A29290908B8Fb1`](https://www.oklink.com/xlayer/address/0x68B75d5228b336E28346EC0A99A29290908B8Fb1) |
+| Deployment wallet | [`0x68B75d5228b336E28346EC0A99A29290908B8Fb1`](https://www.oklink.com/xlayer/address/0x68B75d5228b336E28346EC0A99A29290908B8Fb1) (sent the deploy tx; the processor's on-chain `creator()` is the NandArena contract it deployed, which called `createCPU` in the same transaction) |
+| Source verification | [Sourcify exact match for NandArena](https://repo.sourcify.dev/196/0x3fddB010FF747fFf0Fc7D1fA3e28aaFBA9bB3f64) (creation + runtime bytecode) |
 | Deploy tx (`createCPU` via the TapeOut factory) | [`0x087e3789…88fe1`](https://www.oklink.com/xlayer/tx/0x087e378915fc84f4b463f49eb92951dc7ff7f0f39f12a2a10320582a5be88fe1) |
 | Keeper (plays matches; permissionless) | [`0xB9d86f9C3b1911f4C98d68299C7C1E0082970021`](https://www.oklink.com/xlayer/address/0xB9d86f9C3b1911f4C98d68299C7C1E0082970021) |
 

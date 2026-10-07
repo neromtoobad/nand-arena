@@ -95,6 +95,7 @@ export default function About() {
                   <dt>Deployed by</dt><dd><a className="addr" href={addrUrl(DEPLOY.deployer)} target="_blank" rel="noreferrer">{DEPLOY.deployer}</a></dd>
                   <dt>Deploy tx</dt><dd><a className="addr" href={txUrl(DEPLOY.deployTx)} target="_blank" rel="noreferrer">{DEPLOY.deployTx}</a></dd>
                   <dt>TapeOut factory</dt><dd><a className="addr" href={addrUrl(FACTORY)} target="_blank" rel="noreferrer">{FACTORY}</a></dd>
+                  <dt>Source</dt><dd><a href={`https://repo.sourcify.dev/196/${DEPLOY.arena}`} target="_blank" rel="noreferrer">Verified on Sourcify (exact match)</a></dd>
                 </dl>
               ) : <p className="note">Not deployed yet.</p>}
               <div style={{ display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap" }}>
