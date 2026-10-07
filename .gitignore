@@ -18,3 +18,4 @@ design/*.png
 design/*.jpg
 design/node_modules/
 design/package*.json
+video/index.v1.html
