@@ -3,6 +3,7 @@ import { useApp } from "../App.jsx";
 import Board from "../components/Board.jsx";
 import { Die, Pins } from "../components/Chip.jsx";
 import { BotArt } from "../art.jsx";
+import PageBar from "../components/PageBar.jsx";
 import { runMatch, botName, progOf } from "../sim.js";
 import { arena, loadSeason, findMatchTx, short, txUrl, addrUrl } from "../chain.js";
 import { INPUTS } from "@sdk/game.js";
@@ -41,8 +42,8 @@ export default function Match({ season: sNum, a, b }) {
   const [tx, setTx] = useState(undefined);
   useEffect(() => { if (onchain?.played) findMatchTx(sNum, a, b).then(setTx); }, [onchain?.played, sNum, a, b]);
 
-  if (!data) return <div className="loading">Loading the fight…</div>;
-  if (!ea || !eb || !r) return <div className="loading">No such match.</div>;
+  if (!data) return <><PageBar eyebrow={`Season ${sNum}`} title="Loading the fight…" /><div className="loading">Reading X Layer…</div></>;
+  if (!ea || !eb || !r) return <><PageBar eyebrow={`Season ${sNum}`} title="No such match" /><div className="loading"><a href="#/">Back to the arena</a></div></>;
 
   const k = Math.min(Math.floor(t), r.ticks - 1);
   const frame = r.trace[k];
@@ -59,28 +60,20 @@ export default function Match({ season: sNum, a, b }) {
   const tweet = `https://x.com/intent/tweet?text=${encodeURIComponent(`${botName(ea)} vs ${botName(eb)} on NAND Arena: ${winner ? `${botName(winner)} wins` : "draw"} in ${r.ticks} ticks. Every move refereed on-chain by TapeOut circuits on X Layer.`)}&url=${encodeURIComponent(share)}`;
 
   return (
-    <section className="band violet dots" style={{ minHeight: "calc(100vh - 70px)" }}>
-      <div className="wrap" style={{ paddingTop: 40 }}>
-        <div className="sec-head" style={{ marginBottom: 26 }}>
-          <div>
-            <span className="hero-tag"><i /> Season {sNum} · match {a + 1}–{b + 1}</span>
-            <h1 className="display h-sec" style={{ marginTop: 12, textShadow: "0 6px 0 var(--ink)" }}>
-              {botName(ea)} <span style={{ color: "var(--sun)" }}>vs</span> {botName(eb)}
-            </h1>
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a className="btn" href={tweet} target="_blank" rel="noreferrer">Share on X</a>
-            <a className="btn sun" href={`#/lab?vs=${ea.circuitId}`}>Beat {botName(ea)}</a>
-          </div>
-        </div>
-
-        <div className="fight">
+    <>
+      <PageBar eyebrow={`Season ${sNum} · match ${a + 1}–${b + 1} · refereed on X Layer`} title={<>{botName(ea)} <span className="hl">vs</span> {botName(eb)}</>}>
+        <a className="btn sm" href="#/">All matches</a>
+        <a className="btn sm" href={tweet} target="_blank" rel="noreferrer">Share on X</a>
+        <a className="btn sun sm" href={`#/lab?vs=${ea.circuitId}`}>Beat {botName(ea)}</a>
+      </PageBar>
+      <div className="wrap page">
+        <div className="fight3">
           <Fighter entry={ea} side="a" frame={frame?.bots[0]} crashed={done && r.crash[0]} won={done && r.result === 1} />
-          <div>
+          <div className="tv-match">
             <div className="tv" style={{ position: "relative" }}>
               <div className="tv-bar"><span className="a">{botName(ea)}</span><span className="vs">{String(Math.min(r.ticks, Math.floor(t))).padStart(3, "0")}/{r.ticks}</span><span className="b">{botName(eb)}</span></div>
               <div style={{ position: "relative" }}>
-                <Board match={r} t={t} size={540} />
+                <Board match={r} t={t} size={560} />
                 {done && <div className="ko-banner"><span>{winner ? "K.O.!" : "Draw!"}</span></div>}
               </div>
               <div className="tv-foot"><span>{done ? (winner ? `${botName(winner)} wins` : "Both crashed") : "fight!"}</span><span>seed {("0x" + r.seed.toString(16)).slice(0, 10)}…</span></div>
@@ -92,7 +85,11 @@ export default function Match({ season: sNum, a, b }) {
                 <option value={2}>0.3×</option><option value={6}>1×</option><option value={14}>2×</option><option value={30}>5×</option>
               </select>
             </div>
-            <div className="card pad" style={{ marginTop: 18 }}>
+          </div>
+          <Fighter entry={eb} side="b" frame={frame?.bots[1]} crashed={done && r.crash[1]} won={done && r.result === 2} />
+        </div>
+        <div style={{ maxWidth: 760, margin: "26px auto 0" }}>
+            <div className="card pad">
               <h2 className="h-card" style={{ fontSize: 24 }}>Refereed on-chain</h2>
               <dl className="kv">
                 <dt>Recorded result</dt><dd>{onchain?.played ? (onchain.result === 0 ? "draw" : `${botName(onchain.result === 1 ? ea : eb)} won`) : "not played yet"}</dd>
@@ -106,11 +103,9 @@ export default function Match({ season: sNum, a, b }) {
                 </dd>
               </dl>
             </div>
-          </div>
-          <Fighter entry={eb} side="b" frame={frame?.bots[1]} crashed={done && r.crash[1]} won={done && r.result === 2} />
         </div>
       </div>
-    </section>
+    </>
   );
 }
 
@@ -118,7 +113,7 @@ function Fighter({ entry, side, frame, crashed, won }) {
   const prog = progOf(entry.netlist);
   const sensed = frame ? INPUTS.filter(p => (frame.in >> p.bit) & 1).map(p => p.key) : [];
   return (
-    <div className="fighter dark">
+    <div className="fighter dark compact">
       <div className={`art ${side}`}>
         <BotArt entry={entry} style={{ filter: crashed ? "grayscale(1) brightness(.6)" : undefined, transform: `${side === "b" ? "scaleX(-1) " : ""}${won ? "translateY(-8px) rotate(-4deg)" : crashed ? "rotate(14deg)" : ""}` }} />
       </div>
@@ -129,7 +124,7 @@ function Fighter({ entry, side, frame, crashed, won }) {
       <Pins inBits={frame?.in || 0} out={frame?.out || 0} />
       <div className="note" style={{ color: "#a49fc0", minHeight: 18 }}>{sensed.length ? sensed.join(" · ") : "nothing sensed"}</div>
       <div className="lbl" style={{ marginBottom: 8 }}>Die · {prog.kind.length} elements lit by value</div>
-      <Die prog={prog} sig={frame?.sig} />
+      <Die prog={prog} sig={frame?.sig} cols={16} exact />
     </div>
   );
 }

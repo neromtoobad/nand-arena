@@ -32,11 +32,11 @@ export function ChipAvatar({ entry, size = 34, side }) {
 }
 
 /** The die: one cell per element (LATCHes first, as the compiler emits them), lit by signal value. */
-export function Die({ prog, sig, cols = 16 }) {
+export function Die({ prog, sig, cols = 16, exact }) {
   if (!prog) return null;
   const base = 2 + prog.nIn;
   const n = prog.kind.length;
-  const c = Math.min(cols, Math.max(8, Math.ceil(Math.sqrt(n * 1.6))));
+  const c = exact ? Math.min(cols, Math.max(4, n)) : Math.min(cols, Math.max(8, Math.ceil(Math.sqrt(n * 1.6))));
   return (
     <div className="die" style={{ gridTemplateColumns: `repeat(${c}, 1fr)` }}>
       {Array.from({ length: n }, (_, i) => {

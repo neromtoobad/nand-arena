@@ -4,7 +4,8 @@ import { useApp } from "../App.jsx";
 import Board from "../components/Board.jsx";
 import Circuit from "../components/Circuit.jsx";
 import { Die, Pins } from "../components/Chip.jsx";
-import { Head, BotArt, CAST, HERO } from "../art.jsx";
+import { Head } from "../art.jsx";
+import PageBar from "../components/PageBar.jsx";
 import { compile } from "@sdk/dsl.js";
 import { load, step } from "@sdk/vm.js";
 import { playMatch, matchSeed, INPUTS, RESULT } from "@sdk/game.js";
@@ -116,23 +117,13 @@ export default function Lab({ query }) {
   const lines = src.split("\n").length;
   return (
     <>
-      <section className="band mint dots-ink lab-hero">
-        <div className="wrap">
-          <div>
-            <div className="eyebrow">Bot Lab · Season {season?.season ?? 1}</div>
-            <h1 className="display h-sec" style={{ marginTop: 10 }}>
-              {target ? <>Build a bot to <span style={{ color: "var(--violet)" }}>beat {botName(target)}</span></> : <>Design a bot. <span style={{ color: "var(--violet)" }}>Spar free.</span></>}
-            </h1>
-            <p className="sub" style={{ color: "var(--ink)", maxWidth: 620, marginTop: 14 }}>
-              Everything here runs in your browser with exactly the rules the contract uses. You only pay when you tape out.
-            </p>
-          </div>
-          {target ? <BotArt entry={target} /> : <img src={HERO} alt="" />}
-        </div>
-      </section>
-
-      <section className="band cream">
-        <div className="wrap" style={{ paddingTop: 44 }}>
+      <PageBar eyebrow={`Bot Lab · Season ${season?.season ?? 1} · runs in your browser with the contract's exact rules`}
+        title={target ? <>Build a bot to <span className="hl">beat {botName(target)}</span></> : <>Design a bot. <span className="hl">Spar free.</span></>}>
+        {target && <Head entry={target} size={56} />}
+        <a className="btn sm" href="#/">Back to the arena</a>
+      </PageBar>
+      <section>
+        <div className="wrap page">
           <div className="lab">
             <div style={{ display: "grid", gap: 22 }}>
               <div className="console">
@@ -203,9 +194,12 @@ export default function Lab({ query }) {
                 {built.prog && (built.prog.kind.length <= 140
                   ? <Circuit prog={built.prog} sig={beat?.sig} />
                   : <div className="dark"><Die prog={built.prog} sig={beat?.sig} /></div>)}
-                <div className="legend">
-                  {INPUTS.map(p => [<code key={p.key}>{p.key}</code>, <span key={p.key + "l"} className="note" style={{ fontSize: 13 }}>{p.label}</span>])}
-                </div>
+                <details style={{ marginTop: 12 }}>
+                  <summary className="eyebrow" style={{ cursor: "pointer", color: "var(--violet)" }}>Sensor reference</summary>
+                  <div className="legend">
+                    {INPUTS.map(p => [<code key={p.key}>{p.key}</code>, <span key={p.key + "l"} className="note" style={{ fontSize: 13 }}>{p.label}</span>])}
+                  </div>
+                </details>
               </div>
 
               <div className="card pad">
