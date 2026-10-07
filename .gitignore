@@ -10,3 +10,7 @@ ref/
 *.log
 .DS_Store
 .vercel
+video/out/
+video/score.default.js
+submission/FORM.md
+submission/X_POST.md

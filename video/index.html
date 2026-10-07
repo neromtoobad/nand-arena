@@ -1,0 +1,434 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>NAND Arena reel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --canvas: #ecebe5; --dot: #d3d1c8;
+    --ink: #1d1d1b; --paper: #ffffff; --screen: #0c110f; --green: #0f6b5c; --soft: #e4f0ec;
+    --muted: #8a8880; --ink2: #4e4d48; --hair: #ebe9e2;
+    --a: #12b89c; --a-glow: #4ff2d4; --b: #ff4f8b; --b-glow: #ff8db3; --amber: #c98a12; --red: #c4423b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--canvas); }
+  body { font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: var(--ink); letter-spacing: -0.012em; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  em { font-style: normal; color: var(--green); }
+  .on-dark em { color: var(--a-glow); }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  #world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  #grid { position: absolute; left: -8000px; top: -8000px; width: 16000px; height: 16000px; background-size: 32px 32px; }
+  #shape { position: absolute; overflow: hidden; transform-origin: 50% 50%; }
+  .content { position: absolute; left: 50%; top: 50%; transform-origin: 50% 50%; display: none; }
+  .on-dark { color: #fff; }
+  #cursor { position: absolute; left: 0; top: 0; width: 40px; height: 40px; transform-origin: 7px 5px; pointer-events: none; z-index: 10; }
+  svg.i { display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 12px; font-weight: 600; transform-origin: 50% 50%; }
+  .btn.dark { background: #1d1d1b; color: #fff; }
+  .btn.green { background: #0f6b5c; color: #fff; }
+  .btn.mint { background: #4ff2d4; color: #0c110f; }
+  .btn.light { background: #ffffff; color: #0f6b5c; }
+  .eyebrow { font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .title { font-size: 40px; font-weight: 800; letter-spacing: -0.035em; }
+  .pin { display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 12px; border-radius: 9px; font-family: "JetBrains Mono", monospace; font-size: 15px; font-weight: 700; }
+  .cell { border-radius: 4px; }
+  /* code */
+  .code { font-family: "JetBrains Mono", monospace; font-size: 21px; line-height: 40px; white-space: pre; }
+  .k { color: #0f6b5c; font-weight: 700; } .in { color: #b06e00; font-weight: 700; } .op { color: #8a8880; } .o { color: #1d1d1b; font-weight: 700; } .id { color: #4e4d48; }
+  .caret { display: inline-block; width: 2px; height: 26px; background: #0f6b5c; vertical-align: -6px; }
+  .res { display: inline-flex; align-items: center; justify-content: center; width: 78px; height: 30px; border-radius: 8px; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 14px; }
+  .res.W { background: #e4f0ec; color: #0f6b5c; } .res.D { background: #efede7; color: #8a8880; } .res.L { background: #fbe9e7; color: #c4423b; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 7px; border-radius: 6px; background: #efede7; color: #4e4d48; }
+  .badge.p { background: #e4f0ec; color: #0f6b5c; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <div id="grid"></div>
+    <div id="shape">
+
+      <!-- 1. start pill (screen) -->
+      <div class="content on-dark" id="c-start" data-w="380" data-h="92">
+        <div style="height:100%;display:flex;align-items:center;justify-content:center;gap:16px;font-size:30px;font-weight:800;letter-spacing:-.03em">
+          <span class="logo" data-light="1"></span><span>NAND Arena</span>
+        </div>
+      </div>
+
+      <!-- 2. Bot Lab (paper) -->
+      <div class="content" id="c-lab" data-w="1080" data-h="580">
+        <div style="position:absolute;left:44px;top:40px" class="eyebrow">Bot Lab · Season 1</div>
+        <div style="position:absolute;left:44px;top:64px" class="title">Write the <em>logic.</em></div>
+        <div id="lab-editor" style="position:absolute;left:44px;top:140px;width:640px;height:300px;border-radius:16px;background:#fbfaf7;border:1px solid var(--hair)">
+          <div class="code mono" style="position:absolute;left:0;top:26px;width:46px;text-align:right;color:#c2c0b8;font-size:17px">1<br>2<br>3<br>4<br>5</div>
+          <div id="lab-code" class="code" style="position:absolute;left:66px;top:26px"></div>
+        </div>
+        <div id="lab-ok" class="mono" style="position:absolute;left:44px;top:456px;width:640px;height:44px;border-radius:12px;background:#e4f0ec;color:#0f6b5c;font-size:15px;display:flex;align-items:center;gap:22px;padding:0 18px">
+          <span>✓ compiles to NAND</span><span id="lab-meta"></span>
+        </div>
+        <div style="position:absolute;left:730px;top:140px;width:306px">
+          <div class="eyebrow">Gates</div>
+          <div id="lab-gates" class="tnum" style="font-size:96px;font-weight:800;letter-spacing:-.05em;line-height:96px;height:96px;margin-top:6px"></div>
+          <div id="lab-die" style="margin-top:22px;display:grid;grid-template-columns:repeat(7,1fr);gap:7px"></div>
+        </div>
+        <div id="lab-btn" class="btn dark" style="position:absolute;left:730px;top:456px;width:306px;height:56px;font-size:18px">View the circuit <span data-icon="arrow" data-size="20"></span></div>
+      </div>
+
+      <!-- 3. Circuit (screen) -->
+      <div class="content on-dark" id="c-circuit" data-w="1240" data-h="680">
+        <div style="position:absolute;left:44px;top:38px;color:#7f908a" class="eyebrow">Polar Clock · 21 gates · 1 bit of memory</div>
+        <div style="position:absolute;left:44px;top:62px" class="title">Real <em>NAND</em> gates.</div>
+        <div id="ci-btn" class="btn mint" style="position:absolute;right:44px;top:58px;width:250px;height:54px;font-size:18px">Spar the field <span data-icon="arrow" data-size="20"></span></div>
+        <div id="ci-pins" style="position:absolute;left:44px;top:140px;display:flex;gap:10px"></div>
+        <svg id="ci-svg" style="position:absolute;left:30px;top:196px;width:1180px;height:456px"></svg>
+      </div>
+
+      <!-- 4. Spar (paper) -->
+      <div class="content" id="c-spar" data-w="760" data-h="640">
+        <div style="position:absolute;left:42px;top:38px" class="eyebrow">Free sparring · same seeds as the chain</div>
+        <div style="position:absolute;left:42px;top:62px" class="title">Spar the <em>field.</em></div>
+        <div id="sp-rows" style="position:absolute;left:42px;right:42px;top:136px;border-top:1px solid var(--hair)"></div>
+        <div style="position:absolute;left:42px;bottom:40px">
+          <div class="eyebrow">Projected</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px"><div id="sp-pts" class="tnum" style="font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:44px;height:44px"></div><span style="font-size:20px;font-weight:700;color:var(--muted)">pts</span></div>
+        </div>
+        <div id="sp-btn" class="btn dark" style="position:absolute;right:42px;bottom:40px;width:330px;height:60px;font-size:18px">Tape out · <span class="mono" style="font-weight:600">0.00472 OKB</span></div>
+      </div>
+
+      <!-- 5. Hold to tape out (green) -->
+      <div class="content on-dark" id="c-hold" data-w="220" data-h="220">
+        <svg width="220" height="220" viewBox="0 0 220 220" style="position:absolute;inset:0">
+          <circle cx="110" cy="110" r="78" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="5" />
+          <circle id="hd-arc" cx="110" cy="110" r="78" fill="none" style="stroke:#4ff2d4" stroke-width="5" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" transform="rotate(-90 110 110)" />
+        </svg>
+        <div id="hd-label" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div class="mono" style="font-size:15px;font-weight:700;color:#fff">tape out</div>
+          <div class="mono" style="font-size:12px;color:rgba(255,255,255,.7)" id="hd-burn">21 transistors</div>
+        </div>
+        <div id="hd-check" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#4ff2d4"><span data-icon="check" data-size="64" data-stroke="2.2"></span></div>
+      </div>
+
+      <!-- 6. Taped out (soft) -->
+      <div class="content" id="c-taped" data-w="880" data-h="116">
+        <div style="height:100%;display:flex;align-items:center;gap:18px;padding:0 26px 0 30px">
+          <div style="width:52px;height:52px;border-radius:26px;background:#0f6b5c;color:#fff;display:flex;align-items:center;justify-content:center;flex:none"><span data-icon="check" data-size="28" data-stroke="2.2"></span></div>
+          <div>
+            <div style="font-size:26px;font-weight:800;letter-spacing:-.025em;white-space:nowrap">Circuit <em>#6</em> taped out</div>
+            <div id="tp-meta" class="mono" style="font-size:15px;color:#4e4d48;margin-top:4px;height:20px;white-space:nowrap"></div>
+          </div>
+          <div style="flex:1"></div>
+          <div id="tp-watch" class="btn green" style="height:54px;padding:0 24px;font-size:18px;border-radius:27px">Play match ▸</div>
+        </div>
+      </div>
+
+      <!-- 7. Arena (screen) -->
+      <div class="content on-dark" id="c-arena" data-w="1280" data-h="720">
+        <canvas id="ar-board" width="1240" height="1240" style="position:absolute;left:50px;top:50px;width:620px;height:620px;border-radius:16px;box-shadow:0 0 0 1px #1f2c27"></canvas>
+        <div style="position:absolute;left:720px;top:52px;right:50px">
+          <div class="eyebrow" style="color:#7f908a">Season 1 · refereed on X Layer</div>
+          <div style="margin-top:12px;display:flex;align-items:baseline;gap:14px;font-size:34px;font-weight:800;letter-spacing:-.03em">
+            <span style="color:#ff8db3">Coward</span><span style="font-size:20px;color:#7f908a;font-weight:600">vs</span><span style="color:#4ff2d4">Polar Clock</span>
+          </div>
+          <div id="ar-tick" class="mono" style="margin-top:10px;font-size:18px;color:#c9d6d1"></div>
+          <div class="eyebrow" style="margin-top:30px;color:#7f908a">Polar Clock senses</div>
+          <div id="ar-pins" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"></div>
+          <div class="eyebrow" style="margin-top:28px;color:#7f908a">Die · 21 elements lit by value</div>
+          <div id="ar-die" style="margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;width:420px"></div>
+          <div id="ar-dec" class="mono" style="margin-top:20px;font-size:20px;color:#fff;height:26px"></div>
+        </div>
+        <div id="ar-win" style="position:absolute;left:720px;bottom:50px;font-size:24px;font-weight:800;letter-spacing:-.02em;color:#4ff2d4"></div>
+        <div id="ar-btn" class="btn mint" style="position:absolute;right:50px;bottom:44px;width:210px;height:54px;font-size:18px">Standings <span data-icon="arrow" data-size="20"></span></div>
+      </div>
+
+      <!-- 8. Standings (paper) -->
+      <div class="content" id="c-table" data-w="800" data-h="640">
+        <div style="position:absolute;left:42px;top:38px" class="eyebrow">Round robin · win 3 · draw 1</div>
+        <div style="position:absolute;left:42px;top:62px" class="title">Season 1 <em>standings.</em></div>
+        <div id="tb-rows" style="position:absolute;left:42px;right:42px;top:140px;height:390px"></div>
+        <div id="tb-btn" class="btn dark" style="position:absolute;right:42px;bottom:38px;width:250px;height:56px;font-size:18px">Build yours <span data-icon="arrow" data-size="20"></span></div>
+        <div class="mono" style="position:absolute;left:42px;bottom:56px;font-size:14px;color:var(--muted)">top 3 player bots split the pool</div>
+      </div>
+
+      <!-- 9. Brand (green) -->
+      <div class="content on-dark" id="c-brand" data-w="1120" data-h="560">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div id="br-eye" class="eyebrow" style="color:rgba(255,255,255,.7)">TapeOut × X Layer · Season 1 live</div>
+          <div id="br-title" style="margin-top:18px;font-size:92px;font-weight:800;letter-spacing:-.05em;line-height:1">Your bot is a <span style="color:#4ff2d4">chip.</span></div>
+          <div id="br-url" class="mono" style="margin-top:24px;font-size:26px;color:rgba(255,255,255,.88)">arena.nerom.site</div>
+          <div id="br-cta" class="btn light" style="margin-top:34px;height:62px;padding:0 30px;border-radius:31px;font-size:21px">Build a bot <span data-icon="arrow" data-size="22"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <svg id="cursor" viewBox="0 0 34 34"><path d="M7 4.5 L7 26 L12.4 20.9 L16.3 29.2 L20.3 27.4 L16.5 19.4 L23.8 19.4 Z" fill="#1d1d1b" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
+</div>
+
+<script src="data.js"></script>
+<script src="reel.js"></script>
+<script src="score.js"></script>
+<script>
+const { sp, ease, clamp, mix, rgb, lerp } = Reel;
+const D = window.DATA;
+const PALETTE = { canvas: '#ecebe5', dot: '#d3d1c8', paper: '#ffffff', screen: '#0c110f', green: '#0f6b5c', soft: '#e4f0ec' };
+document.getElementById('grid').style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><circle cx='16' cy='16' r='1.15' fill='${PALETTE.dot}'/></svg>`)}")`;
+const $ = (id) => document.getElementById(id);
+
+/* ---- logo ---- */
+const LOGO = (s, light) => `<svg width="${s}" height="${s}" viewBox="0 0 32 32"><rect x="5" y="5" width="22" height="22" rx="5" fill="${light ? '#ffffff' : '#1d1d1b'}"/>${[10, 16, 22].map((p) => `<g fill="${light ? '#ffffff' : '#1d1d1b'}"><rect x="${p - 1}" y="1" width="2" height="4" rx="1"/><rect x="${p - 1}" y="27" width="2" height="4" rx="1"/><rect x="1" y="${p - 1}" width="4" height="2" rx="1"/><rect x="27" y="${p - 1}" width="4" height="2" rx="1"/></g>`).join('')}<path d="M10 20 v-8 h5 v4 h4" stroke="#12b89c" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 12 v8 h-5" stroke="#ff4f8b" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+document.querySelectorAll('.logo').forEach((e) => (e.innerHTML = LOGO(46, e.dataset.light)));
+
+/* ---- the bot's real netlist: VM + schematic layout (same semantics as sdk/vm.js) ---- */
+const NIN = 8, BASE = 2 + NIN, REC = D.records, NSIG = BASE + REC.length;
+const LATCH_D = REC.filter((r) => r[0] === 1).map((r) => r[1]);
+function evalSig(inBits, state = [0]) {
+  const s = new Uint8Array(NSIG); s[1] = 1;
+  for (let i = 0; i < NIN; i++) s[2 + i] = (inBits >> i) & 1;
+  let li = 0;
+  REC.forEach((r, i) => { s[BASE + i] = r[0] === 0 ? ((s[r[1]] & s[r[2]]) ? 0 : 1) : (state[li++] | 0); });
+  return s;
+}
+const INPUTS = ['F', 'L', 'R', 'F2', 'OL', 'OF', 'RL', 'COIN'];
+const SIG0 = evalSig(0), SIG1 = evalSig(1), SIG2 = evalSig(1 | 64);   // nothing, F (blocked ahead), F + RL
+
+// layered layout
+const depth = new Int32Array(NSIG), used = new Set();
+REC.forEach((r, i) => { const s = BASE + i; if (r[0] === 0) { depth[s] = 1 + Math.max(depth[r[1]], depth[r[2]]); used.add(r[1]); used.add(r[2]); } else used.add(r[1]); });
+const cols = new Map(); const put = (s, c) => { if (!cols.has(c)) cols.set(c, []); cols.get(c).push(s); };
+INPUTS.forEach((_, b) => { if (used.has(2 + b)) put(2 + b, 0); });
+REC.forEach((r, i) => put(BASE + i, r[0] === 1 ? 0 : depth[BASE + i]));
+const nCols = Math.max(...cols.keys()) + 1, maxRows = Math.max(...[...cols.values()].map((v) => v.length));
+const VW = 1180, VH = 456, colW = (VW - 140) / (nCols - 1 || 1), rowH = Math.min(52, (VH - 40) / maxRows);
+const NODE = new Map();
+for (const [c, list] of cols) list.forEach((s, r) => NODE.set(s, { s, x: 70 + c * colW, y: VH / 2 + (r - (list.length - 1) / 2) * rowH }));
+const WIRES = [];
+REC.forEach((r, i) => { const s = BASE + i; if (r[0] === 0) { WIRES.push([r[1], s, -6]); WIRES.push([r[2], s, 6]); } else WIRES.push([r[1], s, 0, true]); });
+(function buildSchematic() {
+  const svg = $('ci-svg'); svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`);
+  let h = '';
+  WIRES.forEach(([f, t, dy, back], k) => {
+    const a = NODE.get(f), b = NODE.get(t); if (!a || !b) return;
+    const x1 = a.x + 14, y1 = a.y, x2 = b.x - 14, y2 = b.y + dy;
+    const d = back ? `M${x1},${y1} C${x1 + 60},${y1} ${x1 + 60},${Math.min(y1, y2) - 40} ${(x1 + x2) / 2},${Math.min(y1, y2) - 40} S${x2 - 50},${y2} ${x2},${y2}`
+                   : `M${x1},${y1} C${(x1 + x2) / 2},${y1} ${(x1 + x2) / 2},${y2} ${x2},${y2}`;
+    h += `<path id="w${k}" d="${d}" fill="none" stroke-width="2.4" ${back ? 'stroke-dasharray="5 5"' : ''}/>`;
+  });
+  for (const n of NODE.values()) {
+    if (n.s < BASE) h += `<g id="n${n.s}"><rect x="${n.x - 34}" y="${n.y - 14}" width="48" height="28" rx="7"/><text x="${n.x - 10}" y="${n.y + 5}" text-anchor="middle" font-size="14" font-weight="700" font-family="JetBrains Mono">${INPUTS[n.s - 2]}</text></g>`;
+    else if (REC[n.s - BASE][0] === 1) h += `<g id="n${n.s}"><rect x="${n.x - 14}" y="${n.y - 14}" width="28" height="28" rx="5" stroke-width="2"/><text x="${n.x}" y="${n.y + 5}" text-anchor="middle" font-size="13" font-weight="700" font-family="JetBrains Mono">M</text></g>`;
+    else {
+      const out = n.s - (NSIG - 2);
+      h += `<g id="n${n.s}"><path d="M${n.x - 13},${n.y - 13} h13 a13,13 0 0 1 0,26 h-13 z" stroke-width="2"/><circle cx="${n.x + 16}" cy="${n.y}" r="3.2" stroke-width="2"/>${out >= 0 ? `<text x="${n.x + 26}" y="${n.y + 6}" font-size="17" font-weight="800" font-family="JetBrains Mono" fill="#fff">${out === 0 ? '◀ L' : 'R ▶'}</text>` : ''}</g>`;
+    }
+  }
+  svg.innerHTML = h;
+})();
+$('ci-pins').innerHTML = INPUTS.map((k) => `<div id="pin-${k}" class="pin" style="background:#1b2622;color:#7f908a">${k}</div>`).join('') +
+  `<div style="width:18px"></div><div id="pin-oL" class="pin" style="background:#1b2622;color:#7f908a">◀ L</div><div id="pin-oR" class="pin" style="background:#1b2622;color:#7f908a">R ▶</div>`;
+
+/* ---- code with highlighting ---- */
+const LINES = D.src.split('\n');
+const TOTAL_CH = D.src.replace(/\n/g, '').length;
+function tok(line) {
+  return line.split(/(\s+|[()!&|^=])/).filter((x) => x !== '').map((w) => {
+    const cls = /^(mem|let|next)$/.test(w) ? 'k' : /^(F|F2|L|R|RL|OL|OF|COIN)$/.test(w) ? 'in' : /^(left|right)$/.test(w) ? 'o' : /^[()!&|^=]$/.test(w) ? 'op' : 'id';
+    return [...w].map((ch) => `<span class="${cls}">${ch === ' ' ? ' ' : ch}</span>`).join('');
+  }).join('');
+}
+$('lab-code').innerHTML = LINES.map((l, i) => `<div id="ln${i}">${tok(l)}</div>`).join('') + '<span id="lab-caret" class="caret"></span>';
+const CODE_SPANS = [...document.querySelectorAll('#lab-code > div > span')];
+$('lab-die').innerHTML = Array.from({ length: D.gates }, (_, i) => `<div class="cell" id="ld${i}" style="height:34px;background:${REC[i][0] === 1 ? '#fbf1db' : '#e4f0ec'};${REC[i][0] === 1 ? 'outline:2px solid #c98a12;outline-offset:-2px;' : ''}${i >= D.gates - 2 ? 'box-shadow:inset 0 0 0 2px #1d1d1b;' : ''}"></div>`).join('');
+
+/* ---- spar rows ---- */
+const HOUSE_COLORS = { Cautious: 150, Lookahead: 200, Hunter: 30, Coward: 330, Weaver: 270 };
+const CHIP = (hue, mint) => `<svg width="34" height="34" viewBox="0 0 40 40">${[8, 16, 24, 32].map((p) => `<g fill="#b9b6ab"><rect x="${p - 1}" y="1" width="2" height="4" rx="1"/><rect x="${p - 1}" y="35" width="2" height="4" rx="1"/><rect x="1" y="${p - 1}" width="4" height="2" rx="1"/><rect x="35" y="${p - 1}" width="4" height="2" rx="1"/></g>`).join('')}<rect x="4.5" y="4.5" width="31" height="31" rx="6" fill="#1d1d1b" stroke="${mint ? '#12b89c' : `hsl(${hue} 45% 45%)`}" stroke-width="1.5"/><rect x="15" y="15" width="10" height="10" rx="2" fill="${mint ? '#4ff2d4' : `hsl(${hue} 60% 55%)`}"/></svg>`;
+$('sp-rows').innerHTML = D.spar.map((s, i) => `
+  <div id="sp-r${i}" style="position:relative;height:66px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--hair)">
+    <div data-hover-bg style="position:absolute;inset:6px -14px;border-radius:12px;background:rgba(15,107,92,.06);opacity:0"></div>
+    <span style="position:relative">${CHIP(HOUSE_COLORS[s.name])}</span>
+    <span style="position:relative;font-size:20px;font-weight:650">${s.name}</span>
+    <span class="mono" style="position:relative;font-size:14px;color:var(--muted)">${s.gates} gates</span>
+    <span style="flex:1"></span>
+    <span id="sp-res${i}" class="res ${s.res}" style="position:relative">${s.res === 'W' ? 'WIN' : s.res === 'D' ? 'DRAW' : 'LOSS'}</span>
+    <span class="mono" style="position:relative;width:46px;text-align:right;font-size:14px;color:var(--muted)">${s.ticks}t</span>
+  </div>`).join('');
+const PTS = D.spar.reduce((a, s) => a + (s.res === 'W' ? 3 : s.res === 'D' ? 1 : 0), 0);
+
+/* ---- standings: real points before and after Polar Clock's five matches ---- */
+const BEFORE = [['Cautious', 5, 7], ['Lookahead', 13, 5], ['Coward', 17, 5], ['Weaver', 31, 5], ['Hunter', 21, 3]];
+const gain = { W: 0, D: 1, L: 3 };   // the house bot's points from its match against Polar Clock
+const ROWS = BEFORE.map(([n, g, p]) => ({ n, g, p0: p, p1: p + gain[D.spar.find((s) => s.name === n).res] })).concat([{ n: 'Polar Clock', g: D.gates, p0: 0, p1: PTS, me: true }]);
+const order = (key) => [...ROWS].sort((a, b) => b[key] - a[key] || a.g - b.g).map((r) => r.n);
+const ORD0 = ROWS.map((r) => r.n), ORD1 = order('p1');
+$('tb-rows').innerHTML = ROWS.map((r, i) => `
+  <div id="tr${i}" style="position:absolute;left:0;right:0;height:62px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--hair);background:${r.me ? '#f3faf7' : '#fff'}">
+    <span id="trk${i}" class="mono" style="width:26px;color:var(--muted);font-size:16px;padding-left:6px"></span>
+    <span>${r.me ? CHIP(0, true) : CHIP(HOUSE_COLORS[r.n])}</span>
+    <span style="font-size:20px;font-weight:${r.me ? 800 : 600}">${r.n}</span>
+    <span class="badge ${r.me ? 'p' : ''}">${r.me ? 'player' : 'house'}</span>
+    <span style="flex:1"></span>
+    <span class="mono" style="font-size:14px;color:var(--muted);width:90px;text-align:right">${r.g} gates</span>
+    <span id="tp${i}" class="tnum" style="width:60px;text-align:right;font-size:26px;font-weight:800;line-height:30px;height:30px;padding-right:6px"></span>
+  </div>`).join('');
+ROWS.forEach((_, i) => Reel.odo($('tp' + i), '00'));
+Reel.odo($('lab-gates'), '00');
+Reel.odo($('sp-pts'), '00');
+
+/* ---- arena ---- */
+const M = D.match;
+$('ar-pins').innerHTML = INPUTS.map((k) => `<div id="ap-${k}" class="pin" style="height:30px;font-size:13px;background:#1b2622;color:#7f908a">${k}</div>`).join('');
+$('ar-die').innerHTML = Array.from({ length: D.gates }, (_, i) => `<div class="cell" id="ad${i}" style="height:40px;background:#1b2622;${REC[i][0] === 1 ? 'outline:2px solid #c98a12;outline-offset:-2px;' : ''}${i >= D.gates - 2 ? 'box-shadow:inset 0 0 0 2px #fff;' : ''}"></div>`).join('');
+const cv = $('ar-board'), cx = cv.getContext('2d');
+function drawBoard(t) {   // t in ticks (float); mirrors web/src/components/Board.jsx
+  const px = 1240, cell = px / 16;
+  cx.fillStyle = '#111915'; cx.fillRect(0, 0, px, px);
+  cx.fillStyle = '#1e2b26';
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { cx.beginPath(); cx.arc((x + .5) * cell, (y + .5) * cell, cell * .06, 0, 7); cx.fill(); }
+  const ticks = M.ticks, tt = Math.max(0, Math.min(t, ticks)), k = Math.floor(tt), frac = tt - k, done = k >= ticks;
+  const C = (p) => [(p[0] + .5) * cell, (p[1] + .5) * cell];
+  const trail = (pos, col, glow) => {
+    cx.save(); cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.strokeStyle = col; cx.lineWidth = cell * .42; cx.shadowColor = glow; cx.shadowBlur = cell * .5;
+    cx.beginPath(); cx.moveTo(...C(pos[0]));
+    const lastFull = Math.min(k, ticks - 1);
+    for (let i = 1; i <= lastFull; i++) cx.lineTo(...C(pos[i]));
+    let head = C(pos[lastFull]);
+    if (!done) { const f = C(pos[k]), n = C(pos[k + 1]), q = k === ticks - 1 ? Math.min(frac, .55) : frac; head = [f[0] + (n[0] - f[0]) * q, f[1] + (n[1] - f[1]) * q]; cx.lineTo(...head); }
+    else { const f = C(pos[ticks - 1]), n = C(pos[ticks]); head = [f[0] + (n[0] - f[0]) * .55, f[1] + (n[1] - f[1]) * .55]; cx.lineTo(...head); }
+    cx.stroke(); cx.restore(); return head;
+  };
+  const ha = trail(M.posA, '#ff4f8b', '#ff8db3'), hb = trail(M.posB, '#12b89c', '#4ff2d4');
+  const dot = (h, glow, dead) => {
+    cx.save(); cx.fillStyle = dead ? '#fff' : glow; cx.shadowColor = glow; cx.shadowBlur = cell * 1.1; cx.beginPath(); cx.arc(h[0], h[1], cell * .3, 0, 7); cx.fill(); cx.restore();
+    if (dead) { cx.save(); cx.strokeStyle = '#fff'; cx.lineWidth = cell * .12; const r = cell * .55; cx.beginPath(); cx.moveTo(h[0] - r, h[1] - r); cx.lineTo(h[0] + r, h[1] + r); cx.moveTo(h[0] + r, h[1] - r); cx.lineTo(h[0] - r, h[1] + r); cx.stroke(); cx.restore(); }
+  };
+  dot(ha, '#ff8db3', done && M.crash[0]); dot(hb, '#4ff2d4', done && M.crash[1]);
+}
+const MATCH_T0 = 0.55, MATCH_T1 = 5.05;   // seconds into the arena state
+const tickAt = (lt) => clamp((lt - MATCH_T0) / (MATCH_T1 - MATCH_T0)) * M.ticks;
+function setNum(el, v, lineH) { Reel.setOdo(el, v, 0, lineH); el._cols[0].style.opacity = clamp(v - 9); }
+const TURN = ['straight', 'turn left', 'turn right', 'straight'];
+Reel.hydrateIcons();
+
+/* ---- the film: 32 s at 120 BPM = 16 bars ---- */
+const reel = Reel.define({
+  fps: 60, duration: 32, bpm: 120,
+  fills: { paper: PALETTE.paper, screen: PALETTE.screen, green: PALETTE.green, soft: PALETTE.soft },
+  cursorHome: [250, 110],
+  shadow: '0 0 0 1px rgba(29,29,27,.06), 0 2px 4px rgba(29,29,27,.05), 0 26px 60px -20px rgba(12,17,15,.32)',
+  states: [
+    { id: 'start', w: 380, h: 92, r: 46, fill: 'screen', zoom: 2.5, dur: 1.0, cursor: [['move', 0.02, [60, 12]]] },
+    { id: 'lab', w: 1080, h: 580, r: 28, fill: 'paper', zoom: 1.38, dur: 5.0,
+      cursor: [['move', 0.15, { sel: '#lab-editor', dx: 40, dy: -20 }], ['click', 0.45], ['move', 3.1, { sel: '#lab-die', dx: 10, dy: 10 }], ['move', 3.9, { sel: '#lab-btn', dx: 40, dy: 6 }]] },
+    { id: 'circuit', w: 1240, h: 680, r: 28, fill: 'screen', zoom: 1.24, dur: 4.0,
+      cursor: [['move', 0.12, { sel: '#pin-F', dx: 2, dy: 4 }], ['click', 0.95], ['move', 1.15, { sel: '#pin-RL', dx: 2, dy: 4 }], ['click', 1.8], ['move', 2.1, { sel: '#ci-svg', dx: 260, dy: 40 }], ['move', 2.9, { sel: '#ci-btn', dx: 50, dy: 6 }]] },
+    { id: 'spar', w: 760, h: 640, r: 30, fill: 'paper', zoom: 1.36, dur: 4.0,
+      cursor: [['move', 0.45, { sel: '#sp-r0', dx: 150 }], ['move', 0.95, { sel: '#sp-r2', dx: 190 }], ['move', 1.45, { sel: '#sp-r4', dx: 220 }], ['move', 2.6, { sel: '#sp-btn', dx: 60, dy: 8 }]] },
+    { id: 'hold', w: 220, h: 220, r: 110, fill: 'green', zoom: 3.0, dur: 2.0, advance: 'hold', cursor: [['move', 0.02, [8, 10]], ['hold', 0.3, 1.9]] },
+    { id: 'taped', w: 880, h: 116, r: 58, fill: 'soft', zoom: 1.9, dur: 2.0, cursor: [['move', 0.35, { sel: '#tp-watch', dx: 30, dy: 6 }]] },
+    { id: 'arena', w: 1280, h: 720, r: 32, fill: 'screen', zoom: 1.17, dur: 6.0,
+      cursor: [['move', 0.6, { sel: '#ar-die', dx: 120, dy: 30 }], ['move', 2.6, { sel: '#ar-pins', dx: 60, dy: 10 }], ['move', 4.9, { sel: '#ar-btn', dx: 40, dy: 6 }]] },
+    { id: 'table', w: 800, h: 640, r: 30, fill: 'paper', zoom: 1.36, dur: 4.0,
+      cursor: [['move', 0.5, { sel: '#tb-rows', dx: 200, dy: -130 }], ['move', 2.7, { sel: '#tb-btn', dx: 40, dy: 6 }]] },
+    { id: 'brand', w: 1120, h: 560, r: 40, fill: 'green', zoom: 1.34, dur: 3.0, cursor: [['move', 0.3, [380, -120]], ['move', 1.8, { sel: '#br-cta', dx: 40, dy: 8 }]] },
+    { id: 'end', content: 'start', w: 380, h: 92, r: 46, fill: 'screen', zoom: 2.5, dur: null, cursor: [['move', 0.3, [250, 110]]] },
+  ],
+  hover: ['#lab-btn', '#ci-btn', '#sp-r0', '#sp-r1', '#sp-r2', '#sp-r3', '#sp-r4', '#sp-btn', '#tp-watch', '#ar-btn', '#tb-btn', '#br-cta'],
+  press: ['#pin-F', '#pin-RL'],
+  channels: {
+    pinF: { init: 0, w: 22, z: 0.95, target: (a) => (a.clicked('#pin-F') ? 1 : null) },
+    pinRL: { init: 0, w: 22, z: 0.95, target: (a) => (a.clicked('#pin-RL') ? 1 : null) },
+    hold: { init: 0, w: 9, target: (a) => (a.state === 'hold' ? a.holdProgress('hold') : null) },
+    climb: { init: 0, w: 9, z: 0.92, target: (a) => (a.state === 'table' && a.lt > 0.9 ? 1 : null) },
+  },
+  update: {
+    start() {},
+    lab(lt, S, h) {
+      const typed = Math.floor(clamp((lt - 0.55) / 2.35) * TOTAL_CH);
+      CODE_SPANS.forEach((s, i) => (s.style.visibility = i < typed ? 'visible' : 'hidden'));
+      const car = $('lab-caret'); const doneTyping = typed >= TOTAL_CH;
+      if (typed > 0 && !doneTyping) { const last = CODE_SPANS[typed - 1]; last.after(car); }
+      else if (!typed) $('ln0').prepend(car);
+      car.style.opacity = doneTyping ? (Math.floor(lt * 2.4) % 2 ? 0.15 : 1) : 1;
+      const kc = clamp((lt - 2.95) / 0.9);
+      setNum($('lab-gates'), Math.round(D.gates * ease(kc)), 96);
+      for (let i = 0; i < D.gates; i++) { const k = sp(lt - 2.95 - i * 0.04, 18, 0.86), c = $('ld' + i); c.style.opacity = k; c.style.transform = `scale(${0.4 + 0.6 * k})`; }
+      const ko = sp(lt - 3.3, 15, 1); $('lab-ok').style.opacity = ko; $('lab-ok').style.translate = `0 ${(1 - ko) * 8}px`;
+      $('lab-meta').textContent = `${D.nNand} NAND · ${D.nLatch} LATCH · ${D.bytes} bytes`;
+      const kb = sp(lt - 3.5, 15, 0.86); $('lab-btn').style.opacity = kb; $('lab-btn').style.translate = `0 ${(1 - kb) * 12}px`;
+    },
+    circuit(lt, S, h) {
+      const on = (s) => { const v0 = SIG0[s], v1 = SIG1[s], v2 = SIG2[s]; return lerp(lerp(v0, v1, S.pinF), v2, S.pinRL); };
+      const draw = sp(lt - 0.05, 9, 1);
+      WIRES.forEach(([f], k) => { const p = $('w' + k), v = on(f); p.style.stroke = rgb(mix([42, 56, 51], [79, 242, 212], v)); p.style.opacity = 0.35 + 0.65 * draw; p.style.filter = v > 0.5 ? `drop-shadow(0 0 ${4 * v}px rgba(79,242,212,.6))` : 'none'; });
+      for (const n of NODE.values()) {
+        const g = $('n' + n.s), v = on(n.s), shape = g.firstElementChild;
+        if (n.s < BASE) { shape.style.fill = rgb(mix([27, 38, 34], [79, 242, 212], v)); g.querySelector('text').style.fill = v > 0.5 ? '#0c110f' : '#7f908a'; }
+        else { const latch = REC[n.s - BASE][0] === 1; shape.style.fill = rgb(mix([12, 17, 15], latch ? [201, 138, 18] : [18, 184, 156], v)); shape.style.stroke = latch ? '#c98a12' : rgb(mix([74, 94, 87], [79, 242, 212], v)); if (g.children[1].tagName === 'circle') g.children[1].style.stroke = shape.style.stroke; if (latch) g.querySelector('text').style.fill = v > 0.5 ? '#fff' : '#c98a12'; }
+        const k = sp(lt - 0.08 - (n.x / VW) * 0.5, 14, 0.9); g.style.opacity = k;
+      }
+      const pin = (id, v) => { const e = $(id); e.style.background = rgb(mix([27, 38, 34], [79, 242, 212], v)); e.style.color = v > 0.5 ? '#0c110f' : '#7f908a'; };
+      pin('pin-F', S.pinF); pin('pin-RL', S.pinRL);
+      pin('pin-oL', on(NSIG - 2)); pin('pin-oR', on(NSIG - 1));
+    },
+    spar(lt, S, h) {
+      D.spar.forEach((_, i) => { const k = sp(lt - 0.3 - i * 0.16, 15, 0.9), r = $('sp-r' + i); r.style.opacity = k; r.style.translate = `0 ${(1 - k) * 10}px`;
+        const kr = sp(lt - 0.55 - i * 0.16, 17, 0.84), e = $('sp-res' + i); e.style.transform = `scale(${0.6 + 0.4 * kr})`; e.style.opacity = kr; });
+      setNum($('sp-pts'), Math.round(PTS * ease(clamp((lt - 0.6) / 1.3))), 44);
+      const kb = sp(lt - 1.6, 15, 0.86); $('sp-btn').style.opacity = kb; $('sp-btn').style.translate = `0 ${(1 - kb) * 12}px`;
+    },
+    hold(lt, S, h) {
+      $('hd-arc').style.strokeDashoffset = 1 - S.hold;
+      $('hd-burn').textContent = `${Math.round(21 * (1 - S.hold))} transistors`;
+      const kc = sp(lt - 1.9, 18, 0.84); $('hd-check').style.opacity = kc; $('hd-check').style.transform = `scale(${0.7 + 0.3 * kc})`;
+      $('hd-label').style.opacity = 1 - clamp((lt - 1.75) * 6);
+    },
+    taped(lt) { const s = 'burned 21 transistors · NAND Arena processor · X Layer'; $('tp-meta').textContent = s.slice(0, Math.floor(clamp((lt - 0.25) / 0.9) * s.length)); },
+    arena(lt, S, h) {
+      const t = tickAt(lt); drawBoard(t);
+      const k = Math.min(M.ticks - 1, Math.floor(t)), done = t >= M.ticks;
+      $('ar-tick').textContent = `tick ${String(Math.min(M.ticks, Math.floor(t))).padStart(2, '0')} / ${M.ticks}`;
+      const bits = M.die[k], inb = M.ins[k];
+      for (let i = 0; i < D.gates; i++) { const on = bits[i] === '1' && lt > MATCH_T0 - 0.1, latch = REC[i][0] === 1; $('ad' + i).style.background = on ? (latch ? '#c98a12' : '#12b89c') : '#1b2622'; $('ad' + i).style.boxShadow = (on ? `0 0 10px ${latch ? 'rgba(201,138,18,.6)' : 'rgba(79,242,212,.55)'}` : 'none') + (i >= D.gates - 2 ? ', inset 0 0 0 2px #fff' : ''); }
+      INPUTS.forEach((key, b) => { const on = (inb >> b) & 1 && lt > MATCH_T0 - 0.1, e = $('ap-' + key); e.style.background = on ? '#4ff2d4' : '#1b2622'; e.style.color = on ? '#0c110f' : '#7f908a'; });
+      $('ar-dec').textContent = done ? 'Coward crashed' : lt > MATCH_T0 - 0.1 ? `decision: ${TURN[M.outs[k]]}` : '';
+      const kw = sp(lt - MATCH_T1 - 0.05, 15, 1); $('ar-win').style.opacity = kw; $('ar-win').style.translate = `0 ${(1 - kw) * 8}px`;
+      $('ar-win').textContent = `Polar Clock wins · ${M.ticks} ticks`;
+      const kb = sp(lt - 4.6, 15, 0.86); $('ar-btn').style.opacity = kb; $('ar-btn').style.translate = `0 ${(1 - kb) * 12}px`;
+    },
+    table(lt, S, h) {
+      ROWS.forEach((r, i) => {
+        const y0 = ORD0.indexOf(r.n) * 64, y1 = ORD1.indexOf(r.n) * 64;
+        const k = sp(lt - 0.2 - i * 0.06, 15, 0.9), e = $('tr' + i);
+        e.style.opacity = k; e.style.top = lerp(y0, y1, S.climb) + (1 - k) * 10 + 'px';
+        e.style.zIndex = r.me ? 2 : 1; e.style.boxShadow = r.me ? `0 ${10 * S.climb * (1 - S.climb) * 4}px 24px -12px rgba(15,107,92,${0.5 * Math.sin(Math.PI * S.climb)})` : 'none';
+        setNum($('tp' + i), Math.round(lerp(r.p0, r.p1, clamp(S.climb))), 30);
+        $('trk' + i).textContent = String((S.climb > 0.5 ? ORD1 : ORD0).indexOf(r.n) + 1);
+      });
+      const kb = sp(lt - 2.2, 15, 0.86); $('tb-btn').style.opacity = kb; $('tb-btn').style.translate = `0 ${(1 - kb) * 12}px`;
+    },
+    brand(lt, S, h) {
+      [['br-eye', 0.15], ['br-title', 0.3], ['br-url', 0.55], ['br-cta', 0.85]].forEach(([id, d]) => { const k = sp(lt - d, 15, 0.92), e = $(id); e.style.opacity = k; e.style.translate = `0 ${(1 - k) * 12}px`; });
+    },
+  },
+  score: {
+    prog: ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'E', 'C', 'G', 'Am', 'F', 'C', 'G', 'Am', 'F'],
+    hits: [{ state: 'taped', boom: 0.5, motif: [72, 76, 79] }, { state: 'arena', boom: 0.42, motif: [67, 71, 74] }, { state: 'brand', boom: 0.45, motif: [69, 72, 76, 81] }],
+  },
+  sfx(au, r) {
+    au.typing(r.at('lab') + 0.55, r.at('lab') + 2.9, D.src.replace(/\n/g, ''));
+    au.counter(r.at('lab') + 2.95, r.at('lab') + 3.85, 21, 0.03);
+    au.blip(r.at('circuit') + 0.97, 76); au.blip(r.at('circuit') + 1.82, 81);
+    D.spar.forEach((s, i) => au.blip(r.at('spar') + 0.6 + i * 0.16, s.res === 'W' ? 84 : s.res === 'D' ? 79 : 72, 0.05));
+    au.counter(r.at('spar') + 0.6, r.at('spar') + 1.9, 10, 0.03);
+    for (let i = 0; i < M.ticks; i++) au.tick(r.at('arena') + MATCH_T0 + (i / M.ticks) * (MATCH_T1 - MATCH_T0), 1800 + (i % 4) * 140, 0.022, 0.015);
+    au.zap(r.at('arena') + MATCH_T1);
+    au.counter(r.at('table') + 0.9, r.at('table') + 2.1, 10, 0.03);
+    au.swipe(r.at('table') + 0.95, 0.06);
+  },
+});
+</script>
+</body>
+</html>
