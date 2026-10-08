@@ -104,6 +104,7 @@
     <div id="fc-opps"><img class="fc-opp" data-n="cautious" src="art/cautious.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="lookahead" src="art/lookahead.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="hunter" src="art/hunter.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="coward" src="art/coward.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /><img class="fc-opp" data-n="weaver" src="art/weaver.webp" style="position:absolute;right:150px;bottom:-40px;height:860px;display:none;filter:drop-shadow(0 30px 30px rgba(23,19,43,.35))" /></div>
     <div id="fc-vs" class="d" style="position:absolute;left:50%;top:370px;transform:translateX(-50%);font-size:150px;color:#fff6e9;-webkit-text-stroke:8px #17132b;text-shadow:0 12px 0 #17132b">VS</div>
     <div id="fc-stamp" class="stamp" style="left:50%;top:600px"></div>
+    <div class="m" style="position:absolute;display:inline-block;background:#17132b;color:#fff6e9;border:4px solid #000;border-radius:999px;padding:12px 24px 10px;font-size:22px;font-weight:700;letter-spacing:.14em;left:150px;top:120px">● SPAR IN THE BOT LAB · FREE</div>
     <div id="fc-name" class="d" style="position:absolute;right:120px;top:120px;font-size:96px;color:#17132b;text-align:right"></div>
     <div id="fc-meta" class="m" style="position:absolute;right:124px;top:228px;font-size:26px;font-weight:700;color:#17132b;text-align:right"></div>
     <div id="fc-sum" class="fill" style="background:#17132b;display:none">
@@ -132,7 +133,8 @@
 
   <!-- S9 leaderboard -->
   <div class="scene" id="s-board" style="background:#fff6e9"><div class="fill dots-d"></div>
-    <div class="d" style="position:absolute;left:150px;top:120px;font-size:110px;color:#17132b">Season 1 <span style="color:#6c3cff">leaderboard</span></div>
+    <div class="d" style="position:absolute;left:150px;top:120px;font-size:110px;color:#17132b">Spar <span style="color:#6c3cff">preview</span></div>
+    <div class="m" style="position:absolute;display:inline-block;background:#17132b;color:#fff6e9;border:4px solid #000;border-radius:999px;padding:12px 24px 10px;font-size:22px;font-weight:700;letter-spacing:.14em;right:150px;top:156px">● SIMULATED · SAME SEEDS AS THE CONTRACT</div>
     <div id="lb" style="position:absolute;left:150px;right:150px;top:290px;height:700px"></div>
   </div>
 
@@ -242,7 +244,7 @@ const cold = $('cv-cold').getContext('2d'), wall = $('cv-wall').getContext('2d')
 /* ---- schedule (in beats) ---- */
 const SCENES = [
   ['cold', 0, 'Boot'], ['title', 8, 'Your bot'], ['write', 12, 'Write'], ['compile', 16, 'Compile'], ['tape', 20, 'Tape out'],
-  ['arena', 24, 'Arena'], ['fight', 32, 'Fight card'], ['rings', 40, 'Referee'], ['board', 44, 'Leaderboard'], ['stats', 48, 'Terms'], ['end', 56, 'Play'],
+  ['arena', 24, 'Arena'], ['fight', 32, 'Spar'], ['rings', 40, 'Referee'], ['board', 44, 'Preview'], ['stats', 48, 'Terms'], ['end', 56, 'Play'],
 ];
 const DARK = new Set(['cold', 'write', 'compile', 'arena', 'rings']);
 
@@ -324,7 +326,7 @@ function renderTape(lb) {
   });
   const left = SQ.filter((q) => clamp((lb - .2 - q.d * 2.6) / .9) < 1).length;
   $('tape-n').textContent = `${left} transistors left to burn`;
-  const ko = sp((lb - 3.4) * B, 18, .5); $('tape-ok').textContent = lb > 3.4 ? '✓ circuit #6 · on X Layer' : '';
+  const ko = sp((lb - 3.4) * B, 18, .5); $('tape-ok').textContent = lb > 3.4 ? '✓ taped out on X Layer' : '';
   $('tape-ok').style.transform = `scale(${.4 + .6 * ko})`;
   $('tape-txt').style.transform = `scale(${1 + .05 * Math.sin(lb * Math.PI * 2) * (1 - k)})`;
 }
@@ -333,7 +335,7 @@ function renderArena(lb) {
   const t0 = .25, t1 = 6, ticks = M.ticks;
   const tt = clamp((lb - t0) / (t1 - t0)) * ticks;
   drawBoard(tt);
-  $('arena-tick').textContent = lb < t1 ? `tick ${String(Math.floor(tt)).padStart(2, '0')} / ${ticks}` : 'Polar Clock wins';
+  $('arena-tick').textContent = lb < t1 ? `spar · tick ${String(Math.floor(tt)).padStart(2, '0')} / ${ticks}` : 'spar · Polar Clock wins';
   const zoom = lerp(1.18, 1, ease(lb / 6));
   let shake = '';
   if (lb > 6 && lb < 6.8) { const a = (1 - (lb - 6) / .8) * 18; shake = ` translate(${(hash(Math.floor(lb * 60)) - .5) * a}px, ${(hash(Math.floor(lb * 60) + 3) - .5) * a}px)`; }
